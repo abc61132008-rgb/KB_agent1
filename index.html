@@ -1,0 +1,2471 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>通用型自然探究（KB 知識翻新）智慧對話與研究監測平台</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Marked.js (Markdown) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+  <!-- KaTeX & Extensions (Math & mhchem Chemistry) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/mhchem.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    /* KaTeX / Math / Table 防爆版樣式 */
+    .prose-content {
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .prose-content p {
+      margin-bottom: 0.5rem;
+    }
+    .prose-content p:last-child {
+      margin-bottom: 0;
+    }
+    .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.35rem 0;
+      max-width: 100%;
+    }
+    .prose-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.5rem 0;
+      display: block;
+      overflow-x: auto;
+    }
+    .prose-content th, .prose-content td {
+      border: 1px solid #cbd5e1;
+      padding: 5px 8px;
+      font-size: 0.825rem;
+    }
+    .prose-content pre {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      margin: 0.5rem 0;
+    }
+    .prose-content code {
+      font-family: monospace;
+      background: rgba(148, 163, 184, 0.2);
+      padding: 0.15rem 0.3rem;
+      border-radius: 0.25rem;
+    }
+    @keyframes pulseBorder {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+      50% { box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.25); }
+    }
+    .flash-highlight {
+      animation: pulseBorder 1.2s ease-in-out 2;
+    }
+    @keyframes thinkingDots {
+      0%, 20% { opacity: 0.2; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(-4px); }
+      80%, 100% { opacity: 0.2; transform: translateY(0); }
+    }
+    .dot-1 { animation: thinkingDots 1.3s infinite 0.1s; }
+    .dot-2 { animation: thinkingDots 1.3s infinite 0.3s; }
+    .dot-3 { animation: thinkingDots 1.3s infinite 0.5s; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+          KB
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-sm sm:text-base text-slate-900">通用型探究實作（KB 知識翻新）對話與監測平台</h1>
+            <span id="header-classroom-badge" class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
+              目前教室：載入中...
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls: DB Status, Gemini API Status & View Switcher -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- Persistent DB Status Pill -->
+        <button id="btn-open-db-modal" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer bg-slate-50 border-slate-300 hover:border-emerald-500">
+          <span id="db-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="db-status-text" class="text-slate-700">持久儲存: IndexedDB</span>
+          <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">備份/還原</span>
+        </button>
+
+        <!-- Gemini API Key Status Pill -->
+        <button id="btn-open-api-modal" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer bg-slate-50 border-slate-300 hover:border-indigo-400">
+          <span id="api-status-dot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span id="api-status-text" class="text-slate-700">Gemini: 模擬引擎</span>
+          <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">設定 Key</span>
+        </button>
+
+        <!-- View Mode Switcher -->
+        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+          <button id="mode-btn-student" class="px-3 py-1.5 rounded-lg font-semibold transition bg-white text-indigo-700 shadow-xs cursor-pointer">
+            🎓 學生端介面
+          </button>
+          <button id="mode-btn-teacher" class="px-3 py-1.5 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer">
+            👩‍🏫 教師後台
+          </button>
+          <button id="mode-btn-split" class="px-3 py-1.5 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 hidden md:inline-block cursor-pointer">
+            🖥️ 同屏展示
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Banner -->
+  <div id="toast-banner" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white text-xs sm:text-sm px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 max-w-md">
+    <span id="toast-icon">✨</span>
+    <span id="toast-text">系統訊息</span>
+  </div>
+
+  <!-- Main Container -->
+  <main id="main-grid" class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 grid grid-cols-1 gap-5">
+
+    <!-- ========================================================================= -->
+    <!-- 1. STUDENT INTERFACE                                                      -->
+    <!-- ========================================================================= -->
+    <section id="panel-student" class="w-full max-w-3xl mx-auto flex flex-col gap-3">
+
+      <!-- Student Login / Seat & Group Configuration Bar -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 flex-1">
+            <!-- Classroom Selector -->
+            <div class="flex items-center gap-1.5">
+              <label for="student-classroom-select" class="text-xs font-semibold text-slate-500 shrink-0">課程教室：</label>
+              <select id="student-classroom-select" class="text-xs sm:text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-600">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+
+            <!-- Group Selector -->
+            <div class="flex items-center gap-1.5">
+              <label for="student-group-input" class="text-xs font-semibold text-slate-500 shrink-0">組別：</label>
+              <select id="student-group-input" class="text-xs sm:text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-600">
+                <option value="第 1 組">第 1 組</option>
+                <option value="第 2 組">第 2 組</option>
+                <option value="第 3 組" selected>第 3 組</option>
+                <option value="第 4 組">第 4 組</option>
+                <option value="第 5 組">第 5 組</option>
+                <option value="第 6 組">第 6 組</option>
+              </select>
+            </div>
+
+            <!-- Seat Number Input -->
+            <div class="flex items-center gap-1.5">
+              <label for="student-seat-input" class="text-xs font-semibold text-slate-500 shrink-0">座號：</label>
+              <input id="student-seat-input" type="number" min="1" max="60" value="12" class="w-16 text-xs sm:text-sm font-bold text-center text-indigo-700 bg-indigo-50/60 border border-indigo-300 rounded-xl px-2 py-1.5 focus:outline-none focus:border-indigo-600" />
+            </div>
+
+            <button id="btn-apply-student-id" class="text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer">
+              切換身分
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span id="student-llm-tag" class="text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              ⚡ 模擬知識引擎
+            </span>
+            <span id="student-identity-pill" class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+              👤 第 3 組・12 號同學
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Clean Chat Card -->
+      <div id="student-chat-card" class="bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col overflow-hidden min-h-[580px]">
+
+        <!-- Top Bar inside Chat -->
+        <div class="px-4 py-3 border-b border-slate-200 bg-slate-50/70 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <h2 id="student-topic-title" class="font-bold text-sm sm:text-base text-slate-900">
+                探究主題：載入中...
+              </h2>
+              <button id="btn-toggle-material" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline cursor-pointer">
+                📖 查看教材提示
+              </button>
+            </div>
+            <p id="student-topic-subtitle" class="text-xs text-slate-500 mt-0.5">
+              可詢問科學原理、材料特性、上傳實驗照片或計算公式，AI 探究夥伴會深入引導思考！
+            </p>
+          </div>
+
+          <!-- Switch Personal vs Group -->
+          <div class="inline-flex rounded-xl bg-slate-200/80 p-1 text-xs">
+            <button id="chat-space-personal" class="px-3 py-1.5 rounded-lg font-bold transition bg-white text-indigo-700 shadow-xs cursor-pointer">
+              👤 個人對話
+            </button>
+            <button id="chat-space-group" class="px-3 py-1.5 rounded-lg font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer">
+              👥 小組共構 (<span id="group-tab-label">第 3 組</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- Collapsible Teacher Material Box -->
+        <div id="student-material-drawer" class="hidden bg-amber-50/80 border-b border-amber-200 px-4 py-3 text-xs text-slate-700 space-y-2">
+          <div class="font-bold text-amber-900 flex items-center justify-between">
+            <span>📘 本課教材提示與數據：</span>
+            <button id="btn-close-material" class="text-amber-700 hover:text-amber-950 font-bold cursor-pointer">✕ 收合</button>
+          </div>
+          <div id="student-material-content" class="leading-relaxed whitespace-pre-line text-slate-800"></div>
+          <div id="student-material-attachments" class="flex flex-wrap gap-2 pt-1 border-t border-amber-200/60"></div>
+        </div>
+
+        <!-- Chat Message Stream -->
+        <div id="student-chat-stream" class="flex-1 p-4 space-y-3.5 overflow-y-auto custom-scroll max-h-[440px] bg-slate-50/40">
+          <!-- Messages rendered by JS -->
+        </div>
+
+        <!-- Thinking Indicator -->
+        <div id="thinking-indicator" class="hidden px-4 py-2 flex items-center gap-2 bg-slate-50 border-t border-slate-100 text-xs text-indigo-600 font-medium">
+          <div class="flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 dot-1"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 dot-2"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 dot-3"></span>
+          </div>
+          <span id="thinking-text">AI 正在深度思考與解析中...</span>
+        </div>
+
+        <!-- Pending Upload Attachments Bar -->
+        <div id="student-pending-attachments" class="hidden px-4 py-2 bg-indigo-50/60 border-t border-indigo-100 flex flex-wrap items-center gap-2 text-xs">
+          <!-- Attached chips rendered by JS -->
+        </div>
+
+        <!-- Bottom Input Section -->
+        <div class="p-3.5 bg-white border-t border-slate-200 space-y-2.5">
+          <!-- KB Open Scaffolds -->
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium mb-1.5 flex items-center justify-between">
+              <span>可選思考鷹架（點擊自動帶入，亦可自由輸入提問）：</span>
+              <span id="space-mode-indicator" class="text-indigo-600 font-semibold">目前空間：👤 個人探究對話</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <button data-scaffold="❓ [好奇提問]" data-prefix="❓ [好奇提問] 我想請問為什麼" class="scaffold-chip text-xs px-2.5 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-medium transition cursor-pointer">
+                ❓ 我好奇／想請問…
+              </button>
+              <button data-scaffold="📚 [科學知識]" data-prefix="📚 [科學知識] 我想了解關於這個主題的背景知識與分類：" class="scaffold-chip text-xs px-2.5 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-medium transition cursor-pointer">
+                📚 我想了解材料分類/常識…
+              </button>
+              <button data-scaffold="🧪 [實驗與操作]" data-prefix="🧪 [實驗與操作] 如果我們想測試看看" class="scaffold-chip text-xs px-2.5 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 font-medium transition cursor-pointer">
+                🧪 實驗步驟／如果我們測試…
+              </button>
+              <button data-scaffold="🔍 [分享觀察]" data-prefix="🔍 [分享觀察] 我剛剛發現一個現象：" class="scaffold-chip text-xs px-2.5 py-1 rounded-full bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-medium transition cursor-pointer">
+                🔍 我觀察到的現象是…
+              </button>
+              <button data-scaffold="💡 [我的想法]" data-prefix="💡 [我的想法] 關於這個問題，我目前的猜測是：" class="scaffold-chip text-xs px-2.5 py-1 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium transition cursor-pointer">
+                💡 我的想法／猜測是…
+              </button>
+              <button data-scaffold="🚀 [超越整合]" data-prefix="🚀 [超越整合] 把大家的發現跟討論整合起來，我們認為更合理的解釋是：" class="scaffold-chip text-xs px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold transition cursor-pointer">
+                🚀 綜合大家的想法 (Rise Above)…
+              </button>
+            </div>
+          </div>
+
+          <!-- Input Box + Attachment Buttons + Send -->
+          <div class="space-y-2">
+            <textarea id="student-chat-input" rows="2" class="w-full text-sm border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-indigo-600 bg-white resize-none" placeholder="輸入你想問的問題、觀察到的現象或貼上照片... (支援 Ctrl+V 貼圖、拖曳檔案，Enter 發送)"></textarea>
+            
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <!-- Image Upload Button -->
+                <input type="file" id="student-image-input" accept="image/*" multiple class="hidden" />
+                <button id="btn-upload-image" type="button" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 font-medium px-2.5 py-1.5 rounded-xl border border-slate-300 flex items-center gap-1 transition cursor-pointer">
+                  <span>📷 加入照片/截圖</span>
+                </button>
+
+                <!-- File Upload Button -->
+                <input type="file" id="student-file-input" accept=".txt,.csv,.json,.pdf,.doc,.docx" multiple class="hidden" />
+                <button id="btn-upload-file" type="button" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 font-medium px-2.5 py-1.5 rounded-xl border border-slate-300 flex items-center gap-1 transition cursor-pointer">
+                  <span>📎 上傳數據檔/筆記</span>
+                </button>
+                <span class="text-[11px] text-slate-400 hidden sm:inline">可直接 Ctrl+V 貼上剪貼簿圖片</span>
+              </div>
+
+              <button id="btn-student-send" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold px-5 py-2 rounded-xl transition shadow-xs shrink-0 flex items-center justify-center cursor-pointer">
+                <span>傳送發送</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Real-world Test Quick Buttons -->
+          <div class="pt-1 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5 text-[11px] text-slate-400">
+            <span>🧪 點擊快速測試情境：</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button id="btn-test-replace" class="px-2 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold transition cursor-pointer border border-emerald-300">
+                🌱 「保麗龍能用什麼取代？」
+              </button>
+              <button id="btn-test-heat" class="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold transition cursor-pointer border border-rose-300">
+                🔥 「保麗龍預熱會有什麼反應？」
+              </button>
+              <button id="btn-test-formula" class="px-2 py-0.5 rounded bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold transition cursor-pointer border border-purple-300">
+                🔬 測試化學式與物理公式
+              </button>
+              <button id="btn-quick-misconception" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-600 transition cursor-pointer">
+                測試「迷思概念發言」
+              </button>
+              <button id="btn-quick-riseabove" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 text-slate-600 transition cursor-pointer">
+                測試「高階超越整合 (Rise Above)」
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 2. TEACHER / RESEARCHER BACKEND                                           -->
+    <!-- ========================================================================= -->
+    <section id="panel-teacher" class="hidden w-full flex flex-col gap-4">
+
+      <!-- Backend Header -->
+      <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-sm border border-slate-800">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <h2 class="font-bold text-base sm:text-lg">👩‍🏫 教師課程管理與研究數據即時監測後台</h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              全學期思維演化歷程重播、IndexedDB 永久保存、自動多維度質性編碼、教材照片發布
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button id="btn-header-setup-api" class="text-xs bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1">
+              <span>🔑 設定 Gemini API Key</span>
+            </button>
+            <button id="btn-export-modal" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer">
+              📥 匯出研究數據 (CSV / JSON)
+            </button>
+          </div>
+        </div>
+
+        <!-- Teacher Sub-tabs -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-800 p-1 rounded-xl text-xs">
+          <button id="ttab-btn-monitor" class="py-2 px-3 rounded-lg font-bold transition bg-indigo-600 text-white cursor-pointer">
+            📊 1. 學生數據即時監測
+          </button>
+          <button id="ttab-btn-timeline" class="py-2 px-3 rounded-lg font-bold transition text-slate-300 hover:text-white cursor-pointer">
+            ⏳ 2. 學期初到末歷程重播
+          </button>
+          <button id="ttab-btn-classrooms" class="py-2 px-3 rounded-lg font-bold transition text-slate-300 hover:text-white cursor-pointer">
+            🏫 3. 開設新教室與教材
+          </button>
+          <button id="ttab-btn-logs" class="py-2 px-3 rounded-lg font-bold transition text-slate-300 hover:text-white cursor-pointer">
+            🗂️ 4. 對話紀錄與編碼明細
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: DATA MONITORING DASHBOARD -->
+      <div id="tview-monitor" class="space-y-4">
+        <!-- Filter Bar -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-3 text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-slate-600">篩選教室：</span>
+              <select id="filter-classroom" class="border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 bg-slate-50">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-slate-600">篩選組別：</span>
+              <select id="filter-group" class="border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 bg-slate-50">
+                <option value="ALL">全部組別</option>
+                <option value="第 1 組">第 1 組</option>
+                <option value="第 2 組">第 2 組</option>
+                <option value="第 3 組">第 3 組</option>
+                <option value="第 4 組">第 4 組</option>
+                <option value="第 5 組">第 5 組</option>
+                <option value="第 6 組">第 6 組</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-slate-600">篩選學生座號：</span>
+              <select id="filter-seat" class="border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 bg-slate-50">
+                <option value="ALL">全部座號</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-500 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>即時連動中：IndexedDB 本地持久儲存保護中</span>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="text-xs text-slate-500">累積對話與質性編碼數</div>
+            <div id="kpi-count" class="text-xl font-bold text-slate-900 mt-1">0 筆</div>
+            <div class="text-[11px] text-indigo-600 mt-0.5">含個人與小組對話</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="text-xs text-slate-500">平均想法深化度 (Depth)</div>
+            <div id="kpi-avg-r" class="text-xl font-bold text-emerald-600 mt-1">0.0 / 3.0</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">0-3 分語意推論指標</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="text-xs text-slate-500">知識翻新 Rise Above</div>
+            <div id="kpi-rise-above" class="text-xl font-bold text-amber-600 mt-1">0 次</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">高階綜合與觀點整合</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="text-xs text-slate-500">科學解惑與照片探究</div>
+            <div id="kpi-misconceptions" class="text-xl font-bold text-blue-600 mt-1">0 次</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">材料事實與實驗分析</div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 mb-1">
+              📈 個人 vs. 小組 知識翻新探究維度平均 (0-3 分)
+            </h3>
+            <div class="relative h-56 w-full">
+              <canvas id="chart-cer-bars"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 mb-1">
+              🕸️ 思考鷹架（KB Scaffolds）類別分佈
+            </h3>
+            <div class="relative h-56 w-full">
+              <canvas id="chart-scaffold-dist"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Roster Table -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div class="flex items-center justify-between mb-2.5">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800">
+              🧑‍🎓 個人與小組學習狀態總覽表
+            </h3>
+            <span class="text-[11px] text-slate-500">點擊學生列可快速查看該生紀錄</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 text-slate-500 bg-slate-50">
+                  <th class="py-2 px-3">組別</th>
+                  <th class="py-2 px-3">座號</th>
+                  <th class="py-2 px-3">個人發言數</th>
+                  <th class="py-2 px-3">小組發言數</th>
+                  <th class="py-2 px-3">探究指標 (提問 / 證據 / 深化)</th>
+                  <th class="py-2 px-3">最新行為與發言摘要</th>
+                </tr>
+              </thead>
+              <tbody id="roster-table-body" class="divide-y divide-slate-200 text-slate-700">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: SEMESTER TIMELINE PLAYBACK -->
+      <div id="tview-timeline" class="hidden space-y-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+            <div>
+              <h3 class="font-bold text-sm sm:text-base text-indigo-950">⏳ 全學期思維演化歷程重播器 (Semester Timeline Playback)</h3>
+              <p class="text-xs text-slate-500">
+                依時間軸重現學生從「學期初直覺猜測、迷思概念」到「收集證據、提出假設」，最終「達成超越整合」的完整對話歷史
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="timeline-counter-badge" class="text-xs font-mono font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-xl border border-indigo-200">
+                共 0 則紀錄
+              </span>
+            </div>
+          </div>
+
+          <!-- Timeline Filters -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div>
+              <label class="font-bold text-slate-600 block mb-1">篩選組別：</label>
+              <select id="timeline-group-filter" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 bg-white">
+                <option value="ALL">全部組別</option>
+                <option value="第 1 組">第 1 組</option>
+                <option value="第 2 組">第 2 組</option>
+                <option value="第 3 組">第 3 組</option>
+                <option value="第 4 組">第 4 組</option>
+                <option value="第 5 組">第 5 組</option>
+                <option value="第 6 組">第 6 組</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-600 block mb-1">篩選學生座號：</label>
+              <select id="timeline-seat-filter" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 bg-white">
+                <option value="ALL">全部學生</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-600 block mb-1">排序方向：</label>
+              <select id="timeline-order" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 bg-white">
+                <option value="asc">從學期初到學期末 (最早 → 最新)</option>
+                <option value="desc">由最新反向回溯 (最新 → 最早)</option>
+              </select>
+            </div>
+            <div class="flex items-end">
+              <button id="btn-export-timeline-transcript" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded-lg transition cursor-pointer">
+                📋 複製歷程文字稿
+              </button>
+            </div>
+          </div>
+
+          <!-- Timeline Stream -->
+          <div id="timeline-flow-stream" class="space-y-3.5 max-h-[580px] overflow-y-auto custom-scroll p-2">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: CREATE CLASSROOM & EDIT MATERIAL -->
+      <div id="tview-classrooms" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- Existing Classrooms -->
+        <div class="lg:col-span-5 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">📚 探究教室清單</h3>
+            <span class="text-[11px] text-slate-500">點擊卡片可切換啟用</span>
+          </div>
+          <div id="classroom-list-container" class="space-y-2.5">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Create Classroom Form -->
+        <div class="lg:col-span-7 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+            <div>
+              <h3 class="font-bold text-sm sm:text-base text-indigo-950">➕ 開設新教室與教材發布</h3>
+              <p class="text-xs text-slate-500">支援附加教材照片、講義檔案與設定目標科學概念</p>
+            </div>
+            <button id="btn-fill-sample-class" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer">
+              ✨ 帶入範例新課程 (保溫瓶)
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label for="new-cls-name" class="font-bold text-slate-700 block mb-1">教室名稱 / 班級代碼 *</label>
+              <input id="new-cls-name" type="text" class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-600" placeholder="例如：八年二班 自然探究 (CLS-104)" />
+            </div>
+            <div>
+              <label for="new-cls-topic" class="font-bold text-slate-700 block mb-1">探究主題名稱 *</label>
+              <input id="new-cls-topic" type="text" class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-600" placeholder="例如：自製保溫瓶：影響熱傳播快慢的因素" />
+            </div>
+          </div>
+
+          <div class="text-xs">
+            <label for="new-cls-material" class="font-bold text-slate-700 block mb-1">
+              本堂課教材、科學背景、實驗數據與提示 *
+            </label>
+            <textarea id="new-cls-material" rows="4" class="w-full border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-indigo-600 leading-relaxed" placeholder="輸入教材內容、實驗背景或引導提示..."></textarea>
+          </div>
+
+          <!-- Teacher Attachments -->
+          <div class="text-xs border border-dashed border-slate-300 p-3 rounded-xl bg-slate-50 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-700">📎 附加教材照片或數據檔案 (供學生查閱)：</span>
+              <input type="file" id="teacher-material-file-input" multiple class="hidden" />
+              <button id="btn-teacher-add-file" type="button" class="text-xs bg-white border border-slate-300 hover:border-indigo-400 px-2.5 py-1 rounded-lg font-medium cursor-pointer">
+                + 選取照片或檔案
+              </button>
+            </div>
+            <div id="teacher-attachments-preview" class="flex flex-wrap gap-2 empty:hidden"></div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label for="new-cls-concepts" class="font-bold text-emerald-800 block mb-1">
+                目標概念關鍵字（逗號分隔）
+              </label>
+              <input id="new-cls-concepts" type="text" class="w-full border border-emerald-300 bg-emerald-50/30 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-600" placeholder="例如：傳導, 對流, 輻射, 絕熱" />
+            </div>
+            <div>
+              <label for="new-cls-misconceptions" class="font-bold text-rose-800 block mb-1">
+                常見迷思概念（逗號分隔）
+              </label>
+              <input id="new-cls-misconceptions" type="text" class="w-full border border-rose-300 bg-rose-50/30 rounded-xl px-3 py-2 focus:outline-none focus:border-rose-600" placeholder="例如：棉布會產生熱, 鋁箔自己發熱" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button id="btn-create-classroom" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl transition shadow-sm cursor-pointer">
+              🚀 建立新教室並啟用儲存
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: LIVE CODING LOGS -->
+      <div id="tview-logs" class="hidden bg-slate-950 text-slate-100 p-4 rounded-2xl border border-slate-800 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5 text-xs">
+          <span class="text-slate-400">
+            即時對話自動質性編碼串流（儲存於 IndexedDB，關閉不遺失）：
+          </span>
+          <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
+            IndexedDB Live Stream
+          </span>
+        </div>
+        <div id="backend-log-stream" class="space-y-2.5 max-h-[520px] overflow-y-auto custom-scroll">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ================= MODAL: GEMINI API KEY SETUP ================= -->
+  <div id="api-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🔑</span>
+          <h3 class="font-bold text-base text-slate-900">連線 Google Gemini 官方 API</h3>
+        </div>
+        <button id="btn-close-api-modal" class="text-slate-400 hover:text-slate-700 font-bold text-sm cursor-pointer">✕ 關閉</button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-700">
+        <div class="bg-indigo-50 border border-indigo-200 p-3 rounded-xl space-y-1">
+          <div class="font-bold text-indigo-950">🛡️ 本地安全儲存</div>
+          <p class="text-slate-600 leading-relaxed">
+            API Key 僅存於瀏覽器本地，直接向 Google API 端點發送請求（支援多模態圖片分析），不經任何第三方伺服器。
+          </p>
+        </div>
+
+        <div>
+          <label for="input-api-key" class="font-bold text-slate-800 block mb-1">
+            Google AI Studio API Key *
+          </label>
+          <div class="relative">
+            <input id="input-api-key" type="password" class="w-full border border-slate-300 rounded-xl px-3 py-2 pr-20 text-xs font-mono focus:outline-none focus:border-indigo-600" placeholder="例如：AIzaSy..." />
+            <button id="btn-toggle-key-vis" class="absolute right-2 top-1.5 px-2 py-0.5 rounded text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold cursor-pointer">
+              顯示
+            </button>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-1">
+            申請金鑰：<a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 underline">Google AI Studio</a>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="select-gemini-model" class="font-bold text-slate-800 block">模型版本</label>
+              <button id="btn-fetch-account-models" type="button" class="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold underline cursor-pointer">
+                🔄 查詢可用模型
+              </button>
+            </div>
+            <select id="select-gemini-model" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-semibold bg-slate-50 focus:outline-none focus:border-indigo-600">
+              <option value="gemini-1.5-flash" selected>gemini-1.5-flash (推薦: 穩定且支援圖片)</option>
+              <option value="gemini-1.5-flash-latest">gemini-1.5-flash-latest (自動最新版)</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash (次世代極速版)</option>
+              <option value="gemini-1.5-pro">gemini-1.5-pro (深度推理版)</option>
+              <option value="custom">自訂模型名稱...</option>
+            </select>
+            <div id="custom-model-wrapper" class="hidden mt-2">
+              <input id="input-custom-model" type="text" class="w-full border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-mono" placeholder="輸入自訂代碼，如 gemini-1.5-flash-002" />
+            </div>
+          </div>
+          <div>
+            <label class="font-bold text-slate-800 block mb-1">連線診斷</label>
+            <button id="btn-test-api-connection" class="w-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 font-semibold py-2 rounded-xl text-xs transition cursor-pointer">
+              ⚡ 立即測試金鑰
+            </button>
+          </div>
+        </div>
+
+        <div id="api-test-result" class="hidden p-2.5 rounded-xl text-xs font-medium"></div>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-slate-200">
+        <button id="btn-clear-api-key" class="text-xs text-rose-600 hover:text-rose-800 font-semibold cursor-pointer">
+          🗑️ 清除金鑰（切回模擬引擎）
+        </button>
+        <button id="btn-save-api-key" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow-xs cursor-pointer">
+          💾 儲存並啟用連線
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: INDEXEDDB PERSISTENCE & BACKUP ================= -->
+  <div id="db-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🗄️</span>
+          <h3 class="font-bold text-base text-slate-900">學期資料庫管理 (IndexedDB 本地持久儲存)</h3>
+        </div>
+        <button id="btn-close-db-modal" class="text-slate-400 hover:text-slate-700 font-bold text-sm cursor-pointer">✕ 關閉</button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-700">
+        <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl space-y-1.5">
+          <div class="font-bold text-emerald-950 flex items-center justify-between">
+            <span>🛡️ 永久儲存狀態：已啟用</span>
+            <span class="text-[11px] font-mono text-emerald-700">DB: KB_Inquiry_DB</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed">
+            系統全面採用 IndexedDB 高容量資料庫，關閉網頁、重開機或長時間使用，所有的對話、實驗圖片、研究編碼皆完好保存。
+          </p>
+          <div class="pt-1 flex flex-wrap gap-2 text-[11px] font-semibold text-emerald-800">
+            <span id="db-stat-chats">累積對話：0 則</span>
+            <span>•</span>
+            <span id="db-stat-logs">質性編碼：0 筆</span>
+            <span>•</span>
+            <span id="db-stat-classes">教室數量：0 間</span>
+          </div>
+        </div>
+
+        <div class="border border-slate-200 rounded-xl p-3.5 space-y-2 bg-slate-50">
+          <span class="font-bold text-slate-800 block">💾 全學期資料備份與跨裝置匯入 (Backup & Restore)</span>
+          <p class="text-slate-500 leading-relaxed text-[11px]">
+            將包含文字、對話時間戳記、質性編碼與照片在內的完整學期歷程打包為單一 JSON 檔案：
+          </p>
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            <button id="btn-backup-download-db" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5">
+              <span>⬇️ 匯出全學期備份檔 (.json)</span>
+            </button>
+            <input type="file" id="input-import-db-file" accept=".json" class="hidden" />
+            <button id="btn-trigger-import-db" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5">
+              <span>⬆️ 匯入還原學期備份</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="border border-rose-200 bg-rose-50/40 rounded-xl p-3.5 space-y-2">
+          <span class="font-bold text-rose-900 block">⚠️ 清除與重置資料庫</span>
+          <p class="text-slate-600 leading-relaxed text-[11px]">
+            若新學期需要清除所有舊對話與紀錄，可重置資料庫（建議事先匯出備份）：
+          </p>
+          <button id="btn-wipe-entire-db" class="text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 rounded-xl transition cursor-pointer">
+            🗑️ 清空所有歷史紀錄並還原預設
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: EXPORT RESEARCH DATA ================= -->
+  <div id="export-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-5 shadow-2xl border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+        <h3 class="font-bold text-base text-slate-900">📥 匯出研究編碼數據 (CSV / JSON)</h3>
+        <button id="btn-close-export" class="text-slate-400 hover:text-slate-700 font-bold text-sm cursor-pointer">✕ 關閉</button>
+      </div>
+      <p class="text-xs text-slate-600">
+        包含教室代碼、組別、座號、空間模式、學生發言、AI回答、CER 維度分數與質性編碼指標：
+      </p>
+      <pre id="export-content-pre" class="bg-slate-950 text-emerald-300 p-3 rounded-xl text-[11px] font-mono overflow-x-auto max-h-72 custom-scroll"></pre>
+      <div class="flex flex-wrap justify-between items-center gap-2 pt-2">
+        <span class="text-[11px] text-slate-400">可用於 SPSS、R 語言統計或 ENA 認知網絡分析</span>
+        <div class="flex gap-2">
+          <button id="btn-download-csv" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer">
+            ⬇️ 下載 .CSV 檔案
+          </button>
+          <button id="btn-copy-csv" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer">
+            📊 複製 CSV
+          </button>
+          <button id="btn-copy-json" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer">
+            📋 複製 JSON
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: IMAGE LIGHTBOX ================= -->
+  <div id="lightbox-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
+      <button id="btn-close-lightbox" class="absolute -top-10 right-0 text-white hover:text-slate-300 text-xl font-bold cursor-pointer">
+        ✕ 關閉
+      </button>
+      <img id="lightbox-img" src="" alt="放大預覽" class="max-w-full max-h-[82vh] object-contain rounded-xl shadow-2xl border border-white/20" />
+      <span id="lightbox-caption" class="text-xs text-white/90 mt-2 font-medium bg-black/60 px-3 py-1 rounded-full"></span>
+    </div>
+  </div>
+
+  <!-- ================= APPLICATION LOGIC SCRIPT ================= -->
+  <script>
+    // ==================== 1. DEFAULT DATASETS ====================
+    const DEFAULT_CLASSROOMS = [
+      {
+        id: 'CLS-101',
+        name: '八年一班・理化探究 (CLS-101)',
+        topic: '不同溶液溶解保麗龍',
+        material: '【材料背景知識】\n保麗龍學名為發泡聚苯乙烯（Expanded Polystyrene，縮寫 EPS），回收標誌屬於「6 號塑膠」。高達 98% 都是封閉微小的空氣孔隙，僅 2% 是純塑膠。\n【實驗現象與數據】\n1. 測試溶液：水、75%酒精、沙拉油、去光水(丙酮)、檸檬皮油。\n2. 去光水與檸檬皮油能迅速使保麗龍塌陷為透明膠液，並大量冒泡。\n3. 電子秤測量溶解前後總重量完全相同（42.5g，質量守恆），風乾後變回硬塑膠塊。\n【探究核心】氣泡從何而來？去光水和檸檬油為什麼能溶保麗龍，水和酒精卻不行？',
+        attachments: [],
+        concepts: ['相似相溶', '有機溶劑', '空氣孔隙', '物理溶解', '質量守恆', '聚苯乙烯'],
+        misconceptions: ['強酸腐蝕', '化學反應冒新氣體', '融化', '有毒氣體'],
+        promptGuidance: '若問材料分類或用途直接解答；若問氣泡來源請引導思考 EPS 內部 98% 的空氣。',
+        sampleMisconception: '❓ [好奇提問] 為什麼保麗龍放進去光水裡會一直冒泡泡？是不是去光水有強酸腐蝕性，跟它化學反應產生了新氣體？',
+        sampleRiseAbove: '🚀 [超越整合] 把大家的發現跟討論整合起來，我們認為更合理的解釋是：去光水與檸檬皮精油同屬有機溶劑（相似相溶），能拆開保麗龍的高分子結構；而電子秤總重不變證明冒出的泡泡不是化學反應，只是原本包在孔隙裡的空氣被釋放出來！'
+      },
+      {
+        id: 'CLS-102',
+        name: '七年三班・生物探究 (CLS-102)',
+        topic: '影響酵素活性的因素（雙氧水與豬肝/蘿蔔）',
+        material: '【材料背景知識】\n酵素是蛋白質，具生物催化功能（如過氧化氫酶催化 $2\\text{H}_2\\text{O}_2 \\rightarrow 2\\text{H}_2\\text{O} + \\text{O}_2$）。酵素非活細菌，不會被「燙死」，但高溫會產生蛋白質不可逆變性。\n【實驗現象】\n冰水組(0°C)冒泡慢，回溫後恢復劇烈；沸水組(100°C)完全不冒泡，放涼後重新加入雙氧水依然不冒泡。',
+        attachments: [],
+        concepts: ['蛋白質變性', '催化反應', '不可逆', '過氧化氫酶', '最適溫度'],
+        misconceptions: ['酵素被燙死', '酵素是細菌', '雙氧水壞掉'],
+        promptGuidance: '若問酵素成分直接回答是蛋白質；引導學生區分低溫抑制（可逆）與高溫變性（不可逆）。',
+        sampleMisconception: '❓ [好奇提問] 為什麼煮沸後的蘿蔔加雙氧水都不會冒泡？是因為酵素細菌被 100 度熱水燙死了嗎？',
+        sampleRiseAbove: '🚀 [超越整合] 酵素是蛋白質而非微生物，煮沸造成立體結構破壞變性，因此冷卻後也無法催化；而冰水組只是暫時降低運動速率，回溫後能恢復活性！'
+      }
+    ];
+
+    // ==================== 2. APPLICATION STATE ====================
+    let activeClassroomId = 'CLS-101';
+    let currentGroup = '第 3 組';
+    let currentSeat = '12';
+    let currentChatSpace = 'personal'; // 'personal' | 'group'
+    let currentLayoutMode = 'student'; // 'student' | 'teacher' | 'split'
+
+    let studentPendingAttachments = [];
+    let teacherNewClassAttachments = [];
+
+    let geminiConfig = {
+      apiKey: localStorage.getItem('gemini_kb_api_key') || '',
+      model: localStorage.getItem('gemini_kb_model') || 'gemini-1.5-flash'
+    };
+
+    let CLASSROOMS = [...DEFAULT_CLASSROOMS];
+    let chatHistories = {};
+    let codingLogs = [];
+
+    let cerBarChart = null;
+    let scaffoldPieChart = null;
+
+    // ==================== 3. INDEXEDDB PERSISTENCE MODULE ====================
+    const DB_NAME = 'KB_Inquiry_DB';
+    const DB_VERSION = 1;
+    let dbInstance = null;
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('classrooms')) {
+            db.createObjectStore('classrooms', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('messages')) {
+            db.createObjectStore('messages', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('coding_logs')) {
+            db.createObjectStore('coding_logs', { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = (e) => {
+          console.error('IndexedDB open error:', e);
+          reject(e);
+        };
+      });
+    }
+
+    async function dbSaveMessage(msg) {
+      if (!dbInstance) return;
+      return new Promise((res) => {
+        try {
+          const tx = dbInstance.transaction('messages', 'readwrite');
+          tx.objectStore('messages').put(msg);
+          tx.oncomplete = () => res();
+          tx.onerror = () => res();
+        } catch (e) { res(); }
+      });
+    }
+
+    async function dbSaveCodingLog(logItem) {
+      if (!dbInstance) return;
+      return new Promise((res) => {
+        try {
+          const tx = dbInstance.transaction('coding_logs', 'readwrite');
+          tx.objectStore('coding_logs').put(logItem);
+          tx.oncomplete = () => res();
+          tx.onerror = () => res();
+        } catch (e) { res(); }
+      });
+    }
+
+    async function dbSaveClassroom(cls) {
+      if (!dbInstance) return;
+      return new Promise((res) => {
+        try {
+          const tx = dbInstance.transaction('classrooms', 'readwrite');
+          tx.objectStore('classrooms').put(cls);
+          tx.oncomplete = () => res();
+          tx.onerror = () => res();
+        } catch (e) { res(); }
+      });
+    }
+
+    async function dbLoadAll() {
+      if (!dbInstance) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = dbInstance.transaction(['classrooms', 'messages', 'coding_logs'], 'readonly');
+          const clsReq = tx.objectStore('classrooms').getAll();
+          const msgReq = tx.objectStore('messages').getAll();
+          const logReq = tx.objectStore('coding_logs').getAll();
+
+          tx.oncomplete = () => {
+            const dbCls = clsReq.result || [];
+            const dbMsgs = msgReq.result || [];
+            const dbLogs = logReq.result || [];
+
+            if (dbCls.length > 0) {
+              CLASSROOMS = dbCls;
+            } else {
+              DEFAULT_CLASSROOMS.forEach(c => dbSaveClassroom(c));
+              CLASSROOMS = [...DEFAULT_CLASSROOMS];
+            }
+
+            chatHistories = {};
+            dbMsgs.forEach(m => {
+              const k = m.historyKey;
+              if (!chatHistories[k]) chatHistories[k] = [];
+              chatHistories[k].push(m);
+            });
+
+            codingLogs = dbLogs.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
+
+            // 若初始無歷史訊息，注入歡迎訊息
+            ensureInitialWelcomeMessages();
+            updateDatabaseStatsUI();
+            resolve();
+          };
+          tx.onerror = () => {
+            ensureInitialWelcomeMessages();
+            resolve();
+          };
+        } catch (e) {
+          ensureInitialWelcomeMessages();
+          resolve();
+        }
+      });
+    }
+
+    function ensureInitialWelcomeMessages() {
+      const pKey = 'CLS-101_personal_第 3 組_12';
+      if (!chatHistories[pKey] || chatHistories[pKey].length === 0) {
+        const initMsg = {
+          id: 'MSG-INIT-1',
+          historyKey: pKey,
+          classroomId: 'CLS-101',
+          space: 'personal',
+          group: '第 3 組',
+          seat: '12',
+          sender: 'agent',
+          name: '🤖 AI 探究夥伴',
+          date: new Date().toISOString().slice(0, 10),
+          time: '17:50',
+          timestampMs: Date.now() - 3600000,
+          text: '嗨！第 3 組 12 號同學，歡迎來到「不同溶液溶解保麗龍」探究空間。這裡可以詢問材料背景、實驗步驟，或上傳實驗照片一起探討！'
+        };
+        chatHistories[pKey] = [initMsg];
+        dbSaveMessage(initMsg);
+      }
+    }
+
+    function updateDatabaseStatsUI() {
+      let totalMsgs = 0;
+      Object.values(chatHistories).forEach(arr => totalMsgs += (arr ? arr.length : 0));
+      document.getElementById('db-stat-chats').textContent = `累積對話：${totalMsgs} 則`;
+      document.getElementById('db-stat-logs').textContent = `質性編碼：${codingLogs.length} 筆`;
+      document.getElementById('db-stat-classes').textContent = `教室數量：${CLASSROOMS.length} 間`;
+    }
+
+    // ==================== 4. MARKDOWN & KATEX RENDERING ====================
+    function renderMarkdownAndMath(rawStr) {
+      if (!rawStr) return '';
+
+      // 1. 保護 LaTeX 公式塊，避免被 Markdown 破壞
+      const mathBlocks = [];
+      let masked = rawStr
+        .replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
+          mathBlocks.push({ display: true, code: formula });
+          return `%%MATHBLOCK_${mathBlocks.length - 1}%%`;
+        })
+        .replace(/\$([^\$\n]+?)\$/g, (match, formula) => {
+          mathBlocks.push({ display: false, code: formula });
+          return `%%MATHBLOCK_${mathBlocks.length - 1}%%`;
+        });
+
+      // 2. Marked.js 解析 Markdown
+      marked.setOptions({ breaks: true, gfm: true });
+      let parsedHtml = marked.parse(masked);
+
+      // 3. 還原並由 KaTeX 渲染公式
+      parsedHtml = parsedHtml.replace(/%%MATHBLOCK_(\d+)%%/g, (match, idx) => {
+        const item = mathBlocks[parseInt(idx, 10)];
+        if (!item) return match;
+        try {
+          return katex.renderToString(item.code, {
+            displayMode: item.display,
+            throwOnError: false
+          });
+        } catch (e) {
+          return `<code>${item.code}</code>`;
+        }
+      });
+
+      return parsedHtml;
+    }
+
+    // ==================== 5. HELPERS & FORMATTERS ====================
+    function showToast(msg, icon = '✨') {
+      const banner = document.getElementById('toast-banner');
+      document.getElementById('toast-icon').textContent = icon;
+      document.getElementById('toast-text').textContent = msg;
+      banner.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => banner.classList.add('hidden'), 3200);
+    }
+
+    function getActiveClassroom() {
+      return CLASSROOMS.find(c => c.id === activeClassroomId) || CLASSROOMS[0] || DEFAULT_CLASSROOMS[0];
+    }
+
+    function updateApiStatusBadge() {
+      const dot = document.getElementById('api-status-dot');
+      const text = document.getElementById('api-status-text');
+      const studentTag = document.getElementById('student-llm-tag');
+
+      if (geminiConfig.apiKey && geminiConfig.apiKey.trim().length > 10) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        text.textContent = `Gemini: 已連線 (${geminiConfig.model})`;
+        text.className = 'text-emerald-700 font-bold';
+        studentTag.textContent = `✨ Gemini 官方模型 (${geminiConfig.model})`;
+        studentTag.className = 'text-[11px] px-2 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        text.textContent = 'Gemini: 模擬引擎';
+        text.className = 'text-slate-700';
+        studentTag.textContent = '⚡ 內建知識模擬引擎';
+        studentTag.className = 'text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200';
+      }
+    }
+
+    function openLightbox(imgSrc, caption = '') {
+      const modal = document.getElementById('lightbox-modal');
+      const img = document.getElementById('lightbox-img');
+      const cap = document.getElementById('lightbox-caption');
+      img.src = imgSrc;
+      cap.textContent = caption || '照片預覽';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // ==================== 6. GEMINI MULTIMODAL API ENGINE ====================
+    async function callGeminiApi(userMessage, scaffold, cls, space, group, seat, history, attachments) {
+      const apiKey = geminiConfig.apiKey.trim();
+      let chosenModel = geminiConfig.model || 'gemini-1.5-flash';
+      if (chosenModel === 'custom') {
+        chosenModel = document.getElementById('input-custom-model')?.value.trim() || 'gemini-1.5-flash';
+      }
+
+      // 候選模型備援序列，防止單一模型 404
+      const candidateModels = [
+        chosenModel,
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-2.0-flash',
+        'gemini-1.5-pro'
+      ];
+      const uniqueModels = Array.from(new Set(candidateModels.map(m => m.replace(/^models\//, ''))));
+
+      const systemPrompt = `你是一位熱情、專業的自然科學探究引導導師（KB 知識翻新導向）。
+當前課堂主題是【${cls.name} - ${cls.topic}】。
+教材參考背景：${cls.material}
+發言學生：${group} ${seat} 號同學。
+
+請針對學生的具體問題或上傳照片提供引導與解答：
+1. 若學生上傳照片，請仔細描述照片中的實驗現象、顏色或狀態，並結合原理提供深入解答。
+2. 直接給出清晰正確的科學原理解釋，滿足好奇心，並適度拋出進一步思考的開放式問題。
+3. 若包含公式，行內公式請用 $...$ 包裹，獨立公式用 $$...$$ 包裹，化學式可使用 mhchem 或 LaTeX 格式。
+4. 使用繁體中文，善用粗體與條列排版。`;
+
+      const contents = [];
+      const rawHistory = (history || []).slice(0, -1);
+      let lastRole = null;
+
+      for (const m of rawHistory.slice(-6)) {
+        const role = m.sender === 'student' ? 'user' : 'model';
+        if (contents.length === 0 && role === 'model') continue;
+        if (role !== lastRole) {
+          contents.push({ role, parts: [{ text: m.text }] });
+          lastRole = role;
+        }
+      }
+
+      const currentParts = [];
+      if (attachments && attachments.length > 0) {
+        for (const att of attachments) {
+          if (att.type === 'image' && att.base64) {
+            const base64Data = att.base64.split(',')[1];
+            const mimeType = att.mimeType || 'image/jpeg';
+            currentParts.push({
+              inlineData: { mimeType, data: base64Data }
+            });
+          } else if (att.textContent) {
+            currentParts.push({
+              text: `[附加文字檔案: ${att.name}]\n${att.textContent.slice(0, 2000)}`
+            });
+          }
+        }
+      }
+
+      const promptText = scaffold ? `[思考角度: ${scaffold}]\n${userMessage}` : userMessage;
+      currentParts.push({ text: promptText });
+
+      if (lastRole === 'user' && contents.length > 0) {
+        contents[contents.length - 1].parts.push(...currentParts);
+      } else {
+        contents.push({ role: 'user', parts: currentParts });
+      }
+
+      let lastError = null;
+      for (const cleanModel of uniqueModels) {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey}`;
+        const requestBody = {
+          contents,
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+        };
+
+        try {
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+          });
+
+          if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            const errMsg = errData.error?.message || `HTTP ${resp.status}`;
+            throw new Error(errMsg);
+          }
+
+          const data = await resp.json();
+          const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!reply) throw new Error('API 回傳空內容');
+
+          return {
+            reply: reply.trim(),
+            isRealGemini: true,
+            usedModel: cleanModel,
+            research_coding: {
+              kb_move: 'Real_Gemini_Multimodal',
+              scores: { c: 3, e: 3, r: 3 },
+              flag: `✨ Gemini (${cleanModel}) 官方生成`
+            }
+          };
+        } catch (err) {
+          lastError = err;
+          console.warn(`嘗試模型 ${cleanModel} 失敗:`, err.message);
+          // 若為無效金鑰直接中斷
+          if (err.message.includes('API_KEY_INVALID') || err.message.includes('key not valid')) {
+            throw err;
+          }
+        }
+      }
+
+      throw lastError || new Error('所有可用 Gemini 模型呼叫失敗');
+    }
+
+    // ==================== 7. FALLBACK SCIENCE ENGINE ====================
+    function evaluateFallbackEngine(text, scaffold, cls, space, group, seat, attachments) {
+      const q = text.trim();
+      const hasImage = attachments && attachments.some(a => a.type === 'image');
+
+      if (hasImage) {
+        return {
+          reply: `我已經收到並檢視了你上傳的實驗照片！📸\n\n從照片中可以清楚看到保麗龍接觸溶液後產生的結構變化。保麗龍（聚苯乙烯 EPS）內部含有高達 98% 的封閉空氣孔隙，當遇到有機溶劑（如丙酮或檸檬油）時，聚苯乙烯分子間的作用力被破壞，原本困在孔隙中的空氣瞬間被釋放出來，因此會觀察到密集的氣泡現象！\n\n你可以觀察看看：將這塊透明膠狀物靜置風乾後，它會不會重新變回堅硬的塑膠塊呢？`,
+          research_coding: { kb_move: 'Visual_Evidence_Inquiry', scores: { c: 3, e: 3, r: 3 }, flag: '📸 照片實驗現象分析' }
+        };
+      }
+
+      if (/取代|替代|代替|環保/.test(q)) {
+        return {
+          reply: `目前已有許多環保材料可取代傳統保麗龍：\n\n1. **玉米澱粉發泡粒**：外觀與防震保麗龍相似，但**溶於水即可分解**，完全天然環保。\n2. **蘑菇菌絲體 (Mycelium) 包材**：利用真菌菌絲結合農業廢棄物（如木屑）生長成型，質輕、隔熱且可直接堆肥。\n3. **蜂巢瓦楞紙緩衝材**：利用六角幾何構造吸收衝擊力，可 100% 回收。\n\n這些材料既保留了防震與隔熱效果，又解決了千年不化的環境問題！`,
+          research_coding: { kb_move: 'Material_Substitution', scores: { c: 3, e: 3, r: 3 }, flag: '環保替代材料解析' }
+        };
+      }
+
+      if (/預熱|遇熱|加熱|溫度|微波|烤/.test(q)) {
+        return {
+          reply: `保麗龍（聚苯乙烯 EPS）受熱會經歷以下階段反應：\n\n1. **軟化收縮 (約 70°C ~ 90°C)**：\n   保麗龍耐熱度低，接觸熱水或熱油時，聚苯乙烯分子鏈會軟化，孔隙內的膨脹空氣逸散，整塊保麗龍會**迅速萎縮塌陷成硬塊**！\n2. **熔化分解 (超過 100°C)**：\n   會熔成黏稠液體，若燃燒則會產生濃黑煙並釋出有害物質。\n\n因此千萬不能將保麗龍容器放進微波爐或盛裝滾燙剛起鍋的熱湯喔！`,
+          research_coding: { kb_move: 'Thermal_Property', scores: { c: 3, e: 3, r: 2 }, flag: '熱性質與受熱塌陷解析' }
+        };
+      }
+
+      if (/化學式|公式|雙氧水|酵素|單擺/.test(q)) {
+        return {
+          reply: `科學探究中常用精確的數學與化學方程式來描述現象：\n\n- **雙氧水分解催化反應式**：\n$$ 2\\text{H}_2\\text{O}_2 \\xrightarrow{\\text{Catalase}} 2\\text{H}_2\\text{O} + \\text{O}_2\\uparrow $$\n- **熱量變化計算公式**：\n$$ \\Delta H = m \\cdot s \\cdot \\Delta T $$\n- **單擺週期公式**（在小角度下）：\n$$ T = 2\\pi \\sqrt{\\frac{L}{g}} $$\n\n這些公式幫助我們量化並理解微觀分子與物理變因之間的因果關係！`,
+          research_coding: { kb_move: 'Formula_Explanation', scores: { c: 3, e: 3, r: 3 }, flag: '🔬 數學與化學方程式解析' }
+        };
+      }
+
+      return {
+        reply: `針對你的提問「**${q}**」：\n\n在【${cls.topic}】探究中，這是個非常好的切入點！以聚苯乙烯的高分子結構來看，它的溶解屬於**物理溶解**（分子間作用力改變，質量維持守恆），而非生成新物質的化學反應。\n\n你也可以試著運用「🔍 [分享觀察]」或「🚀 [超越整合]」將你的想法與小組同學一起對照討論！`,
+        research_coding: { kb_move: 'Inquiry_Dialogue', scores: { c: 2, e: 2, r: 2 }, flag: '自然探究引導' }
+      };
+    }
+
+    // ==================== 8. SEND MESSAGE PIPELINE ====================
+    async function sendStudentMessage(overrideText = null, overrideScaffold = null) {
+      const inputEl = document.getElementById('student-chat-input');
+      const sendBtn = document.getElementById('btn-student-send');
+      const rawText = (overrideText !== null ? overrideText : inputEl.value).trim();
+      
+      const attachmentsToSend = [...studentPendingAttachments];
+      if (!rawText && attachmentsToSend.length === 0) return;
+
+      currentGroup = document.getElementById('student-group-input').value;
+      currentSeat = document.getElementById('student-seat-input').value.trim() || '12';
+
+      const cls = getActiveClassroom();
+      const scaffold = overrideScaffold || window._activeScaffoldChip || '';
+      window._activeScaffoldChip = '';
+
+      const historyKey = currentChatSpace === 'personal'
+        ? `${activeClassroomId}_personal_${currentGroup}_${currentSeat}`
+        : `${activeClassroomId}_group_${currentGroup}`;
+
+      if (!chatHistories[historyKey]) chatHistories[historyKey] = [];
+
+      const nowTime = new Date().toTimeString().slice(0, 5);
+      const nowDate = new Date().toISOString().slice(0, 10);
+      const timestampMs = Date.now();
+
+      const newStudentMsg = {
+        id: 'MSG-' + timestampMs + '-' + Math.floor(Math.random() * 1000),
+        historyKey,
+        classroomId: activeClassroomId,
+        space: currentChatSpace,
+        sender: 'student',
+        group: currentGroup,
+        seat: currentSeat,
+        date: nowDate,
+        time: nowTime,
+        timestampMs,
+        scaffold,
+        text: rawText,
+        attachments: attachmentsToSend
+      };
+
+      chatHistories[historyKey].push(newStudentMsg);
+      await dbSaveMessage(newStudentMsg);
+
+      // 清空輸入
+      inputEl.value = '';
+      studentPendingAttachments = [];
+      renderPendingAttachmentsUI();
+      renderStudentInterface();
+
+      // UI 思考中狀態
+      const thinkingIndicator = document.getElementById('thinking-indicator');
+      const thinkingText = document.getElementById('thinking-text');
+      thinkingIndicator.classList.remove('hidden');
+      sendBtn.disabled = true;
+      sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      let evalResult = null;
+      const isGeminiConnected = geminiConfig.apiKey && geminiConfig.apiKey.trim().length > 10;
+
+      try {
+        if (isGeminiConnected) {
+          thinkingText.textContent = attachmentsToSend.some(a => a.type === 'image')
+            ? '✨ Gemini 正在辨識實驗照片並推理分析...'
+            : '✨ Gemini 正在即時生成科學解答...';
+
+          try {
+            evalResult = await callGeminiApi(
+              rawText, scaffold, cls, currentChatSpace, currentGroup, currentSeat,
+              chatHistories[historyKey], attachmentsToSend
+            );
+          } catch (err) {
+            console.warn('Gemini API call failed, using fallback:', err);
+            evalResult = {
+              reply: `⚠️ **Gemini 官方連線提醒**：\`${err.message}\`\n\n*(已啟動本地智慧科學引擎為您解答)*：\n\n${evaluateFallbackEngine(rawText, scaffold, cls, currentChatSpace, currentGroup, currentSeat, attachmentsToSend).reply}`,
+              research_coding: { kb_move: 'API_Fallback_Used', scores: { c: 2, e: 2, r: 2 }, flag: 'Gemini 離線轉備用引擎' }
+            };
+          }
+        } else {
+          thinkingText.textContent = '智慧探究夥伴正在整理回答...';
+          await new Promise(r => setTimeout(r, 220));
+          evalResult = evaluateFallbackEngine(rawText, scaffold, cls, currentChatSpace, currentGroup, currentSeat, attachmentsToSend);
+        }
+      } catch (fatalErr) {
+        evalResult = evaluateFallbackEngine(rawText, scaffold, cls, currentChatSpace, currentGroup, currentSeat, attachmentsToSend);
+      } finally {
+        thinkingIndicator.classList.add('hidden');
+        sendBtn.disabled = false;
+        sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+
+      const agentReplyMsg = {
+        id: 'MSG-' + Date.now() + '-AGENT',
+        historyKey,
+        classroomId: activeClassroomId,
+        space: currentChatSpace,
+        sender: 'agent',
+        name: currentChatSpace === 'group' ? '🤖 小組 KB 促動 AI' : '🤖 AI 探究夥伴',
+        date: nowDate,
+        time: new Date().toTimeString().slice(0, 5),
+        timestampMs: Date.now(),
+        text: evalResult.reply,
+        usedModel: evalResult.usedModel || null
+      };
+
+      chatHistories[historyKey].push(agentReplyMsg);
+      await dbSaveMessage(agentReplyMsg);
+
+      const coding = evalResult.research_coding || { kb_move: 'Open_Dialogue', scores: { c: 2, e: 2, r: 2 }, flag: '探究對話' };
+      const newLogItem = {
+        id: 'LOG-' + (101 + codingLogs.length),
+        classroomId: activeClassroomId,
+        date: nowDate,
+        timestamp: new Date().toTimeString().slice(0, 8),
+        timestampMs: Date.now(),
+        space: currentChatSpace,
+        group: currentGroup,
+        seat: currentSeat,
+        scaffold: scaffold || '自由提問',
+        rawText,
+        attachments: attachmentsToSend,
+        aiReply: evalResult.reply,
+        kbMove: coding.kb_move || 'Inquiry_Move',
+        scores: coding.scores || { c: 2, e: 2, r: 2 },
+        flag: coding.flag || '探究交流',
+        isRealLLM: !!evalResult.isRealGemini
+      };
+
+      codingLogs.unshift(newLogItem);
+      await dbSaveCodingLog(newLogItem);
+      updateDatabaseStatsUI();
+
+      renderStudentInterface();
+      renderTeacherBackend(true);
+    }
+
+    // ==================== 9. RENDER INTERFACES ====================
+    function renderPendingAttachmentsUI() {
+      const bar = document.getElementById('student-pending-attachments');
+      bar.innerHTML = '';
+      if (studentPendingAttachments.length === 0) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+
+      studentPendingAttachments.forEach((att, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'flex items-center gap-1.5 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg text-slate-800 shadow-2xs';
+        chip.innerHTML = `
+          <span>${att.type === 'image' ? '🖼️' : '📄'}</span>
+          <span class="max-w-[120px] truncate font-medium">${att.name}</span>
+          <button type="button" class="text-rose-500 hover:text-rose-700 font-bold ml-1 cursor-pointer">✕</button>
+        `;
+        chip.querySelector('button').addEventListener('click', () => {
+          studentPendingAttachments.splice(idx, 1);
+          renderPendingAttachmentsUI();
+        });
+        bar.appendChild(chip);
+      });
+    }
+
+    function renderStudentInterface() {
+      const cls = getActiveClassroom();
+
+      const stuSelect = document.getElementById('student-classroom-select');
+      const filterSelect = document.getElementById('filter-classroom');
+      stuSelect.innerHTML = '';
+      filterSelect.innerHTML = '';
+
+      CLASSROOMS.forEach(c => {
+        const o1 = document.createElement('option');
+        o1.value = c.id;
+        o1.textContent = `${c.topic} (${c.name})`;
+        if (c.id === activeClassroomId) o1.selected = true;
+        stuSelect.appendChild(o1);
+
+        const o2 = document.createElement('option');
+        o2.value = c.id;
+        o2.textContent = `${c.topic} (${c.id})`;
+        if (c.id === activeClassroomId) o2.selected = true;
+        filterSelect.appendChild(o2);
+      });
+
+      document.getElementById('header-classroom-badge').textContent = `目前教室：${cls.topic}`;
+      document.getElementById('student-topic-title').textContent = `探究主題：${cls.topic}`;
+      document.getElementById('student-material-content').textContent = cls.material;
+      document.getElementById('student-identity-pill').textContent = `👤 ${currentGroup}・${currentSeat} 號同學`;
+      document.getElementById('group-tab-label').textContent = currentGroup;
+
+      // 教材附件渲染
+      const matAtts = document.getElementById('student-material-attachments');
+      matAtts.innerHTML = '';
+      if (cls.attachments && cls.attachments.length > 0) {
+        cls.attachments.forEach(att => {
+          if (att.type === 'image') {
+            const img = document.createElement('img');
+            img.src = att.base64;
+            img.className = 'w-14 h-14 rounded-lg object-cover border border-amber-300 cursor-pointer shadow-xs';
+            img.title = att.name;
+            img.addEventListener('click', () => openLightbox(att.base64, att.name));
+            matAtts.appendChild(img);
+          } else {
+            const btn = document.createElement('span');
+            btn.className = 'text-[11px] bg-white border border-amber-300 px-2 py-1 rounded text-amber-900 shadow-2xs';
+            btn.textContent = `📄 ${att.name}`;
+            matAtts.appendChild(btn);
+          }
+        });
+      }
+
+      updateApiStatusBadge();
+
+      // 切換個人 vs 小組按鈕樣式
+      const btnPersonal = document.getElementById('chat-space-personal');
+      const btnGroup = document.getElementById('chat-space-group');
+      const spaceIndicator = document.getElementById('space-mode-indicator');
+
+      if (currentChatSpace === 'personal') {
+        btnPersonal.className = 'px-3 py-1.5 rounded-lg font-bold transition bg-white text-indigo-700 shadow-xs cursor-pointer';
+        btnGroup.className = 'px-3 py-1.5 rounded-lg font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer';
+        spaceIndicator.textContent = `目前空間：👤 個人與 AI 對話（${currentGroup} ${currentSeat}號）`;
+      } else {
+        btnGroup.className = 'px-3 py-1.5 rounded-lg font-bold transition bg-white text-emerald-700 shadow-xs cursor-pointer';
+        btnPersonal.className = 'px-3 py-1.5 rounded-lg font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer';
+        spaceIndicator.textContent = `目前空間：👥 ${currentGroup} 小組共構討論室（目前以 ${currentSeat}號 身分發言）`;
+      }
+
+      const historyKey = currentChatSpace === 'personal'
+        ? `${activeClassroomId}_personal_${currentGroup}_${currentSeat}`
+        : `${activeClassroomId}_group_${currentGroup}`;
+
+      const msgs = chatHistories[historyKey] || [];
+      const stream = document.getElementById('student-chat-stream');
+      stream.innerHTML = '';
+
+      msgs.forEach(msg => {
+        const row = document.createElement('div');
+        if (msg.sender === 'agent') {
+          const isGroupAgent = currentChatSpace === 'group';
+          row.className = 'flex items-start gap-2.5';
+          const badge = msg.usedModel ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">✨ Gemini (${msg.usedModel})</span>` : '';
+          row.innerHTML = `
+            <div class="w-8 h-8 rounded-xl ${isGroupAgent ? 'bg-emerald-600' : 'bg-indigo-600'} text-white flex items-center justify-center text-sm shrink-0 mt-0.5 shadow-xs">🤖</div>
+            <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-xs p-3.5 text-xs sm:text-sm text-slate-800 shadow-xs max-w-[88%] space-y-1 leading-relaxed">
+              <div class="flex items-center justify-between gap-2 text-xs font-bold ${isGroupAgent ? 'text-emerald-700' : 'text-indigo-600'}">
+                <div class="flex items-center gap-1.5">
+                  <span>${msg.name}</span>
+                  ${badge}
+                </div>
+                <span class="text-slate-400 font-normal text-[11px]">${msg.time}</span>
+              </div>
+              <div class="prose-content text-slate-800">${renderMarkdownAndMath(msg.text)}</div>
+            </div>
+          `;
+        } else {
+          const isMe = String(msg.seat) === String(currentSeat);
+          row.className = `flex items-start ${isMe ? 'justify-end' : 'justify-start'} gap-2.5`;
+          const bubbleStyle = isMe ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-xs' : 'bg-white border border-slate-300 text-slate-800 rounded-2xl rounded-tl-xs';
+
+          let attHtml = '';
+          if (msg.attachments && msg.attachments.length > 0) {
+            attHtml = `<div class="flex flex-wrap gap-1.5 pt-2">`;
+            msg.attachments.forEach(att => {
+              if (att.type === 'image') {
+                attHtml += `<img src="${att.base64}" class="w-16 h-16 rounded-lg object-cover border border-white/40 cursor-pointer" onclick="openLightbox('${att.base64}', '${att.name}')" />`;
+              } else {
+                attHtml += `<span class="text-[10px] px-2 py-0.5 rounded bg-black/20 text-white border border-white/20">📄 ${att.name}</span>`;
+              }
+            });
+            attHtml += `</div>`;
+          }
+
+          row.innerHTML = `
+            <div class="${bubbleStyle} p-3.5 text-xs sm:text-sm shadow-xs max-w-[85%] space-y-1">
+              <div class="flex items-center justify-between gap-3 text-[11px] ${isMe ? 'text-indigo-200' : 'text-slate-500'} font-semibold">
+                <span>${msg.group}・${msg.seat} 號同學</span>
+                <span>${msg.time}</span>
+              </div>
+              ${msg.scaffold ? `<span class="inline-block text-[11px] px-2 py-0.5 rounded-full ${isMe ? 'bg-indigo-500 text-white' : 'bg-amber-100 text-amber-900'} font-semibold">${msg.scaffold}</span>` : ''}
+              <div class="leading-relaxed whitespace-pre-line">${msg.text}</div>
+              ${attHtml}
+            </div>
+          `;
+        }
+        stream.appendChild(row);
+      });
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    function renderTeacherBackend(flashNewest = false) {
+      const filterCls = document.getElementById('filter-classroom').value || activeClassroomId;
+      const filterGrp = document.getElementById('filter-group').value || 'ALL';
+      const filterSeatVal = document.getElementById('filter-seat').value || 'ALL';
+
+      const classLogs = codingLogs.filter(l => l.classroomId === filterCls);
+      const uniqueSeats = Array.from(new Set(classLogs.map(l => l.seat))).sort((a, b) => Number(a) - Number(b));
+      const seatSelect = document.getElementById('filter-seat');
+      const prevVal = seatSelect.value;
+      seatSelect.innerHTML = '<option value="ALL">全部座號</option>';
+      uniqueSeats.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = `${s} 號同學`;
+        if (s === prevVal) opt.selected = true;
+        seatSelect.appendChild(opt);
+      });
+
+      const filteredLogs = classLogs.filter(l => {
+        if (filterGrp !== 'ALL' && l.group !== filterGrp) return false;
+        if (filterSeatVal !== 'ALL' && String(l.seat) !== String(filterSeatVal)) return false;
+        return true;
+      });
+
+      // KPI 計算
+      document.getElementById('kpi-count').textContent = `${filteredLogs.length} 筆`;
+      const avgR = filteredLogs.length
+        ? (filteredLogs.reduce((acc, l) => acc + (l.scores?.r || 1), 0) / filteredLogs.length).toFixed(1)
+        : '0.0';
+      document.getElementById('kpi-avg-r').textContent = `${avgR} / 3.0`;
+
+      const riseCount = filteredLogs.filter(l => (l.kbMove && l.kbMove.includes('Rise_Above')) || (l.scaffold && l.scaffold.includes('超越'))).length;
+      document.getElementById('kpi-rise-above').textContent = `${riseCount} 次`;
+
+      const scienceCount = filteredLogs.filter(l => (l.attachments && l.attachments.length > 0) || (l.scaffold && l.scaffold.includes('科學知識'))).length;
+      document.getElementById('kpi-misconceptions').textContent = `${scienceCount} 次`;
+
+      // 名冊彙整
+      const studentMap = {};
+      classLogs.forEach(l => {
+        if (filterGrp !== 'ALL' && l.group !== filterGrp) return;
+        const key = `${l.group}_${l.seat}`;
+        if (!studentMap[key]) {
+          studentMap[key] = {
+            group: l.group,
+            seat: l.seat,
+            personalCount: 0,
+            groupCount: 0,
+            scores: l.scores || { c: 2, e: 2, r: 1 },
+            latestFlag: l.flag || '探究交流',
+            latestText: l.rawText || ''
+          };
+        }
+        if (l.space === 'personal') studentMap[key].personalCount++;
+        else studentMap[key].groupCount++;
+      });
+
+      const rosterBody = document.getElementById('roster-table-body');
+      rosterBody.innerHTML = '';
+      const list = Object.values(studentMap);
+      if (list.length === 0) {
+        rosterBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-400">目前尚無學生對話記錄</td></tr>`;
+      } else {
+        list.forEach(st => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition cursor-pointer';
+          tr.addEventListener('click', () => {
+            document.getElementById('filter-seat').value = st.seat;
+            renderTeacherBackend(false);
+          });
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 font-bold text-slate-800">${st.group}</td>
+            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold">${st.seat} 號</span></td>
+            <td class="py-2.5 px-3">${st.personalCount} 則</td>
+            <td class="py-2.5 px-3">${st.groupCount} 則</td>
+            <td class="py-2.5 px-3 font-semibold">問:${st.scores.c} / 證:${st.scores.e} / <span class="text-indigo-700">深:${st.scores.r}</span></td>
+            <td class="py-2.5 px-3 text-[11px] truncate max-w-[200px]">${st.latestFlag} (${st.latestText.slice(0, 20)}...)</td>
+          `;
+          rosterBody.appendChild(tr);
+        });
+      }
+
+      // 教室清單
+      const clsContainer = document.getElementById('classroom-list-container');
+      clsContainer.innerHTML = '';
+      CLASSROOMS.forEach(c => {
+        const isCurrent = c.id === activeClassroomId;
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-xl border transition cursor-pointer ${isCurrent ? 'border-2 border-indigo-600 bg-indigo-50/50 shadow-xs' : 'border-slate-200 hover:border-indigo-300 bg-slate-50'}`;
+        card.addEventListener('click', () => {
+          activeClassroomId = c.id;
+          document.getElementById('filter-classroom').value = c.id;
+          renderStudentInterface();
+          renderTeacherBackend(false);
+          showToast(`已啟用教室：${c.topic}`, '🏫');
+        });
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-bold text-slate-900">${c.topic}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full ${isCurrent ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'} font-semibold">
+              ${isCurrent ? '目前啟用' : '點擊切換'}
+            </span>
+          </div>
+          <div class="text-[11px] text-slate-500 mb-1">${c.name}</div>
+          <div class="text-[11px] text-slate-600 line-clamp-2 bg-white p-2 rounded border border-slate-200 leading-relaxed">${c.material}</div>
+        `;
+        clsContainer.appendChild(card);
+      });
+
+      // 後台 Log 串流
+      const logStream = document.getElementById('backend-log-stream');
+      logStream.innerHTML = '';
+      filteredLogs.forEach((l, idx) => {
+        const item = document.createElement('div');
+        item.className = `p-3 rounded-xl border ${l.space === 'group' ? 'border-emerald-800 bg-slate-900' : 'border-indigo-800 bg-slate-900/80'} text-xs space-y-1.5 ${flashNewest && idx === 0 ? 'flash-highlight' : ''}`;
+
+        let attPreview = '';
+        if (l.attachments && l.attachments.length > 0) {
+          attPreview = `<div class="flex gap-2 pt-1">`;
+          l.attachments.forEach(a => {
+            if (a.type === 'image') {
+              attPreview += `<img src="${a.base64}" class="w-12 h-12 rounded object-cover border border-slate-700 cursor-pointer" onclick="openLightbox('${a.base64}', '${a.name}')" />`;
+            } else {
+              attPreview += `<span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">📄 ${a.name}</span>`;
+            }
+          });
+          attPreview += `</div>`;
+        }
+
+        item.innerHTML = `
+          <div class="flex items-center justify-between text-[11px]">
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono text-amber-300">${l.id}</span>
+              <span class="font-bold text-white">${l.group}・${l.seat} 號</span>
+              <span class="px-2 py-0.2 rounded text-[10px] ${l.space === 'group' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'}">${l.space === 'group' ? '小組' : '個人'}</span>
+              ${l.isRealLLM ? '<span class="text-[10px] bg-emerald-500/30 text-emerald-300 px-1 rounded">Gemini</span>' : ''}
+            </div>
+            <span class="text-slate-400 font-mono">${l.timestamp}</span>
+          </div>
+          <div class="text-slate-200 bg-slate-950 p-2 rounded border border-slate-800">${l.rawText}</div>
+          ${attPreview}
+          <div class="flex flex-wrap gap-1 text-[10px] pt-1">
+            <span class="px-1.5 py-0.5 rounded bg-slate-800 text-purple-300 border border-slate-700">${l.kbMove}</span>
+            <span class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700">分: ${l.scores?.c || 2}/${l.scores?.e || 2}/${l.scores?.r || 1}</span>
+            <span class="px-1.5 py-0.5 rounded bg-slate-800 text-emerald-300 border border-slate-700">${l.flag}</span>
+          </div>
+        `;
+        logStream.appendChild(item);
+      });
+
+      updateCharts(filteredLogs);
+    }
+
+    function updateCharts(logs) {
+      const pLogs = logs.filter(l => l.space === 'personal');
+      const gLogs = logs.filter(l => l.space === 'group');
+      const avg = (arr, k) => arr.length ? +(arr.reduce((s, x) => s + (x.scores?.[k] || 1), 0) / arr.length).toFixed(2) : 0;
+
+      const pData = [avg(pLogs, 'c'), avg(pLogs, 'e'), avg(pLogs, 'r')];
+      const gData = [avg(gLogs, 'c'), avg(gLogs, 'e'), avg(gLogs, 'r')];
+
+      const ctx1 = document.getElementById('chart-cer-bars').getContext('2d');
+      if (cerBarChart) {
+        cerBarChart.data.datasets[0].data = pData;
+        cerBarChart.data.datasets[1].data = gData;
+        cerBarChart.update();
+      } else {
+        cerBarChart = new Chart(ctx1, {
+          type: 'bar',
+          data: {
+            labels: ['問題探索', '證據連結', '想法深化度'],
+            datasets: [
+              { label: '個人空間平均', data: pData, backgroundColor: '#4f46e5', borderRadius: 6 },
+              { label: '小組空間平均', data: gData, backgroundColor: '#10b981', borderRadius: 6 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 3, ticks: { stepSize: 1 } } }
+          }
+        });
+      }
+
+      const scafLabels = ['❓ 好奇提問', '📚 科學知識', '🧪 實驗操作', '🔍 分享觀察', '💡 我的想法', '🚀 超越整合'];
+      const scafCounts = [
+        logs.filter(l => l.scaffold.includes('提問') || l.scaffold.includes('好奇')).length,
+        logs.filter(l => l.scaffold.includes('知識') || l.scaffold.includes('常識')).length,
+        logs.filter(l => l.scaffold.includes('實驗') || l.scaffold.includes('操作')).length,
+        logs.filter(l => l.scaffold.includes('觀察') || l.scaffold.includes('發現')).length,
+        logs.filter(l => l.scaffold.includes('想法') || l.scaffold.includes('猜測')).length,
+        logs.filter(l => l.scaffold.includes('超越') || l.scaffold.includes('整合')).length
+      ];
+
+      const ctx2 = document.getElementById('chart-scaffold-dist').getContext('2d');
+      if (scaffoldPieChart) {
+        scaffoldPieChart.data.datasets[0].data = scafCounts;
+        scaffoldPieChart.update();
+      } else {
+        scaffoldPieChart = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+            labels: scafLabels,
+            datasets: [{
+              label: '使用次數',
+              data: scafCounts,
+              backgroundColor: ['#f43f5e', '#3b82f6', '#8b5cf6', '#0ea5e9', '#f59e0b', '#10b981'],
+              borderRadius: 6
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+    }
+
+    // ==================== 10. TIMELINE PLAYBACK ENGINE ====================
+    function renderTimelinePlayback() {
+      const groupFilter = document.getElementById('timeline-group-filter').value;
+      const seatFilter = document.getElementById('timeline-seat-filter').value;
+      const sortOrder = document.getElementById('timeline-order').value;
+
+      let allEvents = [];
+      Object.entries(chatHistories).forEach(([key, msgs]) => {
+        if (!key.startsWith(activeClassroomId)) return;
+        (msgs || []).forEach(m => allEvents.push(m));
+      });
+
+      let filtered = allEvents.filter(ev => {
+        if (groupFilter !== 'ALL' && ev.group !== groupFilter) return false;
+        if (seatFilter !== 'ALL' && String(ev.seat) !== String(seatFilter)) return false;
+        return true;
+      });
+
+      filtered.sort((a, b) => {
+        const tA = a.timestampMs || 0;
+        const tB = b.timestampMs || 0;
+        return sortOrder === 'asc' ? tA - tB : tB - tA;
+      });
+
+      // 座號選單
+      const seatSelect = document.getElementById('timeline-seat-filter');
+      const curVal = seatSelect.value;
+      const uniqueSeats = Array.from(new Set(allEvents.filter(e => e.sender === 'student').map(e => e.seat))).filter(Boolean).sort((a,b)=>Number(a)-Number(b));
+      seatSelect.innerHTML = '<option value="ALL">全部學生</option>';
+      uniqueSeats.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = `${s} 號同學`;
+        if (s === curVal) opt.selected = true;
+        seatSelect.appendChild(opt);
+      });
+
+      document.getElementById('timeline-counter-badge').textContent = `共 ${filtered.length} 則時序紀錄`;
+      const stream = document.getElementById('timeline-flow-stream');
+      stream.innerHTML = '';
+
+      if (filtered.length === 0) {
+        stream.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">目前篩選條件下尚無歷程紀錄</div>`;
+        return;
+      }
+
+      filtered.forEach(ev => {
+        const card = document.createElement('div');
+        const isStudent = ev.sender === 'student';
+        const spaceTag = ev.space === 'group' ? '👥 小組' : '👤 個人';
+
+        let attHtml = '';
+        if (ev.attachments && ev.attachments.length > 0) {
+          attHtml = `<div class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-slate-200">`;
+          ev.attachments.forEach(a => {
+            if (a.type === 'image') {
+              attHtml += `<img src="${a.base64}" class="w-16 h-16 rounded-lg object-cover border border-slate-300 cursor-pointer" onclick="openLightbox('${a.base64}', '${a.name}')" />`;
+            } else {
+              attHtml += `<span class="text-[11px] bg-slate-100 border border-slate-300 px-2 py-1 rounded text-slate-700">📄 ${a.name}</span>`;
+            }
+          });
+          attHtml += `</div>`;
+        }
+
+        card.className = `p-3.5 rounded-2xl border text-xs shadow-xs relative pl-8 transition ${isStudent ? 'bg-white border-indigo-200 hover:border-indigo-400' : 'bg-slate-50 border-slate-200'}`;
+        card.innerHTML = `
+          <div class="absolute left-2.5 top-4 w-3 h-3 rounded-full ${isStudent ? 'bg-indigo-600' : 'bg-emerald-500'}"></div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5 text-[11px]">
+            <div class="flex items-center gap-2">
+              <span class="font-bold ${isStudent ? 'text-indigo-900' : 'text-emerald-800'}">
+                ${isStudent ? `🧑‍🎓 ${ev.group}・${ev.seat} 號同學` : ev.name}
+              </span>
+              <span class="px-2 py-0.5 rounded-full ${ev.space === 'group' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'} font-semibold">
+                ${spaceTag}
+              </span>
+              ${ev.scaffold ? `<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-semibold">${ev.scaffold}</span>` : ''}
+            </div>
+            <span class="text-slate-400 font-mono">${ev.date || ''} ${ev.time}</span>
+          </div>
+          <div class="prose-content text-slate-800 leading-relaxed">${renderMarkdownAndMath(ev.text)}</div>
+          ${attHtml}
+        `;
+        stream.appendChild(card);
+      });
+    }
+
+    // ==================== 11. FILE & CLIPBOARD ATTACHMENT HANDLERS ====================
+    function handleFileSelection(files, targetArray, callback) {
+      Array.from(files).forEach(file => {
+        const isImage = file.type.startsWith('image/');
+        const reader = new FileReader();
+
+        if (isImage) {
+          reader.onload = (e) => {
+            targetArray.push({
+              name: file.name,
+              type: 'image',
+              mimeType: file.type,
+              base64: e.target.result
+            });
+            callback();
+          };
+          reader.readAsDataURL(file);
+        } else {
+          reader.onload = (e) => {
+            targetArray.push({
+              name: file.name,
+              type: 'file',
+              mimeType: file.type,
+              textContent: typeof e.target.result === 'string' ? e.target.result : ''
+            });
+            callback();
+          };
+          reader.readAsText(file);
+        }
+      });
+    }
+
+    // ==================== 12. INITIALIZATION & EVENT LISTENERS ====================
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1. 初始化並還原 IndexedDB
+      await openDatabase();
+      await dbLoadAll();
+
+      document.getElementById('input-api-key').value = geminiConfig.apiKey;
+      document.getElementById('select-gemini-model').value = geminiConfig.model;
+      updateApiStatusBadge();
+
+      // 版面切換
+      const setLayout = (mode) => {
+        currentLayoutMode = mode;
+        const main = document.getElementById('main-grid');
+        const pStu = document.getElementById('panel-student');
+        const pTea = document.getElementById('panel-teacher');
+
+        const bS = document.getElementById('mode-btn-student');
+        const bT = document.getElementById('mode-btn-teacher');
+        const bSp = document.getElementById('mode-btn-split');
+
+        [bS, bT, bSp].forEach(b => b.className = 'px-3 py-1.5 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer');
+
+        if (mode === 'student') {
+          bS.className = 'px-3 py-1.5 rounded-lg font-semibold transition bg-white text-indigo-700 shadow-xs cursor-pointer';
+          main.className = 'flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 grid grid-cols-1 gap-5';
+          pTea.classList.add('hidden');
+          pStu.classList.remove('hidden');
+          pStu.className = 'w-full max-w-3xl mx-auto flex flex-col gap-3';
+        } else if (mode === 'teacher') {
+          bT.className = 'px-3 py-1.5 rounded-lg font-semibold transition bg-white text-indigo-700 shadow-xs cursor-pointer';
+          main.className = 'flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 grid grid-cols-1 gap-5';
+          pStu.classList.add('hidden');
+          pTea.classList.remove('hidden');
+          pTea.className = 'w-full flex flex-col gap-4';
+          renderTeacherBackend(false);
+        } else {
+          bSp.className = 'px-3 py-1.5 rounded-lg font-semibold transition bg-white text-indigo-700 shadow-xs cursor-pointer';
+          main.className = 'flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4';
+          pStu.classList.remove('hidden');
+          pTea.classList.remove('hidden');
+          pStu.className = 'lg:col-span-6 w-full flex flex-col gap-3';
+          pTea.className = 'lg:col-span-6 w-full flex flex-col gap-4';
+          renderTeacherBackend(false);
+        }
+      };
+
+      document.getElementById('mode-btn-student').addEventListener('click', () => setLayout('student'));
+      document.getElementById('mode-btn-teacher').addEventListener('click', () => setLayout('teacher'));
+      document.getElementById('mode-btn-split').addEventListener('click', () => setLayout('split'));
+
+      // 學生上傳附件按鈕
+      const imgInput = document.getElementById('student-image-input');
+      const fileInput = document.getElementById('student-file-input');
+      document.getElementById('btn-upload-image').addEventListener('click', () => imgInput.click());
+      document.getElementById('btn-upload-file').addEventListener('click', () => fileInput.click());
+
+      imgInput.addEventListener('change', (e) => {
+        handleFileSelection(e.target.files, studentPendingAttachments, renderPendingAttachmentsUI);
+        imgInput.value = '';
+      });
+      fileInput.addEventListener('change', (e) => {
+        handleFileSelection(e.target.files, studentPendingAttachments, renderPendingAttachmentsUI);
+        fileInput.value = '';
+      });
+
+      // 支援對話框直接 Ctrl+V 貼上剪貼簿圖片
+      document.getElementById('student-chat-input').addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            handleFileSelection([blob], studentPendingAttachments, renderPendingAttachmentsUI);
+            showToast('已從剪貼簿貼上照片！', '📷');
+          }
+        }
+      });
+
+      // 支援拖曳檔案進對話框
+      const chatCard = document.getElementById('student-chat-card');
+      chatCard.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); });
+      chatCard.addEventListener('drop', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (e.dataTransfer?.files?.length > 0) {
+          handleFileSelection(e.dataTransfer.files, studentPendingAttachments, renderPendingAttachmentsUI);
+          showToast('已加入拖曳的檔案！', '📎');
+        }
+      });
+
+      // 燈箱關閉
+      document.getElementById('btn-close-lightbox').addEventListener('click', () => {
+        document.getElementById('lightbox-modal').classList.add('hidden');
+        document.getElementById('lightbox-modal').classList.remove('flex');
+      });
+
+      // 學生發送訊息
+      document.getElementById('btn-student-send').addEventListener('click', () => sendStudentMessage());
+      document.getElementById('student-chat-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendStudentMessage();
+        }
+      });
+
+      // 思考鷹架點選
+      document.querySelectorAll('.scaffold-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          window._activeScaffoldChip = btn.getAttribute('data-scaffold');
+          const prefix = btn.getAttribute('data-prefix');
+          const inp = document.getElementById('student-chat-input');
+          inp.value = prefix;
+          inp.focus();
+        });
+      });
+
+      // 學生教室與身分切換
+      document.getElementById('student-classroom-select').addEventListener('change', (e) => {
+        activeClassroomId = e.target.value;
+        document.getElementById('filter-classroom').value = activeClassroomId;
+        renderStudentInterface();
+        renderTeacherBackend(false);
+      });
+
+      const applyIdentity = () => {
+        currentGroup = document.getElementById('student-group-input').value;
+        currentSeat = document.getElementById('student-seat-input').value.trim() || '12';
+        renderStudentInterface();
+        showToast(`已切換身分：${currentGroup}・${currentSeat} 號`, '👤');
+      };
+      document.getElementById('btn-apply-student-id').addEventListener('click', applyIdentity);
+      document.getElementById('student-group-input').addEventListener('change', applyIdentity);
+
+      // 個人 vs 小組空間切換
+      document.getElementById('chat-space-personal').addEventListener('click', () => {
+        currentChatSpace = 'personal';
+        renderStudentInterface();
+      });
+      document.getElementById('chat-space-group').addEventListener('click', () => {
+        currentChatSpace = 'group';
+        renderStudentInterface();
+      });
+
+      // 教材提示展開/收合
+      document.getElementById('btn-toggle-material').addEventListener('click', () => {
+        document.getElementById('student-material-drawer').classList.toggle('hidden');
+      });
+      document.getElementById('btn-close-material').addEventListener('click', () => {
+        document.getElementById('student-material-drawer').classList.add('hidden');
+      });
+
+      // 測試情境快速按鈕
+      document.getElementById('btn-test-replace').addEventListener('click', () => {
+        sendStudentMessage('保麗龍可以用什麼取代？有什麼環保材料嗎？', '📚 [科學知識]');
+      });
+      document.getElementById('btn-test-heat').addEventListener('click', () => {
+        sendStudentMessage('我想請問保麗龍預熱會有什麼樣的反應？', '❓ [好奇提問]');
+      });
+      document.getElementById('btn-test-formula').addEventListener('click', () => {
+        sendStudentMessage('請寫出雙氧水被過氧化氫酶催化分解的化學方程式，以及熱量變化的計算公式！', '🔬 [公式測試]');
+      });
+      document.getElementById('btn-quick-misconception').addEventListener('click', () => {
+        const cls = getActiveClassroom();
+        sendStudentMessage(cls.sampleMisconception, '❓ [好奇提問]');
+      });
+      document.getElementById('btn-quick-riseabove').addEventListener('click', () => {
+        const cls = getActiveClassroom();
+        sendStudentMessage(cls.sampleRiseAbove, '🚀 [超越整合]');
+      });
+
+      // 教師後台子分頁切換
+      const tTabs = [
+        { btn: 'ttab-btn-monitor', view: 'tview-monitor' },
+        { btn: 'ttab-btn-timeline', view: 'tview-timeline' },
+        { btn: 'ttab-btn-classrooms', view: 'tview-classrooms' },
+        { btn: 'ttab-btn-logs', view: 'tview-logs' }
+      ];
+      tTabs.forEach(({ btn, view }) => {
+        document.getElementById(btn).addEventListener('click', () => {
+          tTabs.forEach(i => {
+            document.getElementById(i.view).classList.add('hidden');
+            document.getElementById(i.btn).className = 'py-2 px-3 rounded-lg font-bold transition text-slate-300 hover:text-white cursor-pointer';
+          });
+          document.getElementById(view).classList.remove('hidden');
+          document.getElementById(btn).className = 'py-2 px-3 rounded-lg font-bold transition bg-indigo-600 text-white cursor-pointer';
+          if (view === 'tview-timeline') renderTimelinePlayback();
+          else renderTeacherBackend(false);
+        });
+      });
+
+      // Timeline 篩選事件
+      document.getElementById('timeline-group-filter').addEventListener('change', renderTimelinePlayback);
+      document.getElementById('timeline-seat-filter').addEventListener('change', renderTimelinePlayback);
+      document.getElementById('timeline-order').addEventListener('change', renderTimelinePlayback);
+      document.getElementById('btn-export-timeline-transcript').addEventListener('click', () => {
+        const text = document.getElementById('timeline-flow-stream').innerText;
+        navigator.clipboard?.writeText(text);
+        showToast('已複製歷程文字稿！', '📋');
+      });
+
+      // 教師上傳教材附件
+      const teacherFileInput = document.getElementById('teacher-material-file-input');
+      const teacherPreview = document.getElementById('teacher-attachments-preview');
+      document.getElementById('btn-teacher-add-file').addEventListener('click', () => teacherFileInput.click());
+      teacherFileInput.addEventListener('change', (e) => {
+        handleFileSelection(e.target.files, teacherNewClassAttachments, () => {
+          teacherPreview.innerHTML = '';
+          teacherNewClassAttachments.forEach((a, idx) => {
+            const tag = document.createElement('span');
+            tag.className = 'text-[11px] bg-white border border-slate-300 px-2 py-1 rounded text-slate-700 flex items-center gap-1';
+            tag.innerHTML = `${a.type === 'image' ? '🖼️' : '📄'} ${a.name} <button class="text-rose-500 font-bold ml-1">✕</button>`;
+            tag.querySelector('button').addEventListener('click', () => {
+              teacherNewClassAttachments.splice(idx, 1);
+              tag.remove();
+            });
+            teacherPreview.appendChild(tag);
+          });
+        });
+      });
+
+      // 建立新教室
+      document.getElementById('btn-create-classroom').addEventListener('click', async () => {
+        const name = document.getElementById('new-cls-name').value.trim();
+        const topic = document.getElementById('new-cls-topic').value.trim();
+        const mat = document.getElementById('new-cls-material').value.trim();
+        if (!name || !topic || !mat) {
+          showToast('請完整填寫名稱、主題與教材內容！', '⚠️');
+          return;
+        }
+
+        const newCls = {
+          id: 'CLS-' + (101 + CLASSROOMS.length),
+          name: `${name} (CLS-${101 + CLASSROOMS.length})`,
+          topic,
+          material: mat,
+          attachments: [...teacherNewClassAttachments],
+          concepts: document.getElementById('new-cls-concepts').value.split(',').map(s=>s.trim()).filter(Boolean),
+          misconceptions: document.getElementById('new-cls-misconceptions').value.split(',').map(s=>s.trim()).filter(Boolean),
+          promptGuidance: '',
+          sampleMisconception: `❓ [好奇提問] 為什麼會有這個現象？是不是材質自己產生的？`,
+          sampleRiseAbove: `🚀 [超越整合] 綜合實驗與數據，關鍵在於核心物理機制而非表面直覺猜測！`
+        };
+
+        CLASSROOMS.unshift(newCls);
+        activeClassroomId = newCls.id;
+        await dbSaveClassroom(newCls);
+
+        document.getElementById('new-cls-name').value = '';
+        document.getElementById('new-cls-topic').value = '';
+        document.getElementById('new-cls-material').value = '';
+        teacherNewClassAttachments = [];
+        teacherPreview.innerHTML = '';
+
+        updateDatabaseStatsUI();
+        renderStudentInterface();
+        renderTeacherBackend(false);
+        showToast(`🎉 成功開設並啟用新教室「${topic}」！`, '🏫');
+      });
+
+      document.getElementById('btn-fill-sample-class').addEventListener('click', () => {
+        document.getElementById('new-cls-name').value = '八年二班・理化探究 (CLS-104)';
+        document.getElementById('new-cls-topic').value = '自製保溫瓶：影響熱傳播快慢的因素';
+        document.getElementById('new-cls-material').value = '【科學背景】\n熱傳播方式分為：傳導（介質接觸）、對流（流體流動）、輻射（電磁波）。空氣是不良導熱體，光亮表面可反射輻射熱。\n【實驗數據】\n80°C 熱水 15 分鐘後：\n- 氣泡布＋鋁箔雙層：68°C（效果最佳）\n- 黑色棉布：55°C\n- 無包覆組：48°C';
+        document.getElementById('new-cls-concepts').value = '傳導, 對流, 輻射, 絕熱';
+        document.getElementById('new-cls-misconceptions').value = '棉布會自己生熱, 鋁箔會發熱';
+        showToast('已帶入範例保溫瓶教材！', '✨');
+      });
+
+      // 後台資料庫 Modal 與快照備份
+      const dbModal = document.getElementById('db-modal');
+      document.getElementById('btn-open-db-modal').addEventListener('click', () => {
+        updateDatabaseStatsUI();
+        dbModal.classList.remove('hidden');
+        dbModal.classList.add('flex');
+      });
+      document.getElementById('btn-close-db-modal').addEventListener('click', () => {
+        dbModal.classList.add('hidden');
+        dbModal.classList.remove('flex');
+      });
+
+      // 匯出全學期備份 JSON
+      document.getElementById('btn-backup-download-db').addEventListener('click', () => {
+        const backup = {
+          exportDate: new Date().toISOString(),
+          classrooms: CLASSROOMS,
+          chatHistories,
+          codingLogs
+        };
+        const str = JSON.stringify(backup, null, 2);
+        const blob = new Blob([str], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `KB_Inquiry_Full_Semester_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        showToast('已成功下載全學期資料備份檔！', '💾');
+      });
+
+      // 匯入還原備份 JSON
+      const importInput = document.getElementById('input-import-db-file');
+      document.getElementById('btn-trigger-import-db').addEventListener('click', () => importInput.click());
+      importInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          try {
+            const data = JSON.parse(evt.target.result);
+            if (!data.chatHistories || !data.classrooms) throw new Error('不合法的備份檔案格式');
+
+            CLASSROOMS = data.classrooms;
+            chatHistories = data.chatHistories;
+            codingLogs = data.codingLogs || [];
+
+            // 存入 IndexedDB
+            CLASSROOMS.forEach(c => dbSaveClassroom(c));
+            Object.values(chatHistories).forEach(arr => arr.forEach(m => dbSaveMessage(m)));
+            codingLogs.forEach(l => dbSaveCodingLog(l));
+
+            updateDatabaseStatsUI();
+            renderStudentInterface();
+            renderTeacherBackend(false);
+            dbModal.classList.add('hidden');
+            dbModal.classList.remove('flex');
+            showToast('🎉 成功還原全學期歷程資料庫！', '✨');
+          } catch (err) {
+            alert('還原失敗：' + err.message);
+          }
+        };
+        reader.readAsText(file);
+        importInput.value = '';
+      });
+
+      // 清空資料庫
+      document.getElementById('btn-wipe-entire-db').addEventListener('click', () => {
+        if (confirm('確定要清空所有歷史對話與編碼紀錄並重置嗎？')) {
+          if (dbInstance) {
+            const tx = dbInstance.transaction(['messages', 'coding_logs'], 'readwrite');
+            tx.objectStore('messages').clear();
+            tx.objectStore('coding_logs').clear();
+          }
+          chatHistories = {};
+          codingLogs = [];
+          ensureInitialWelcomeMessages();
+          updateDatabaseStatsUI();
+          renderStudentInterface();
+          renderTeacherBackend(false);
+          dbModal.classList.add('hidden');
+          dbModal.classList.remove('flex');
+          showToast('已清空所有歷史對話！', '🗑️');
+        }
+      });
+
+      // API Modal
+      const apiModal = document.getElementById('api-modal');
+      const openApiModal = () => {
+        document.getElementById('input-api-key').value = geminiConfig.apiKey;
+        document.getElementById('select-gemini-model').value = geminiConfig.model;
+        document.getElementById('api-test-result').classList.add('hidden');
+        apiModal.classList.remove('hidden');
+        apiModal.classList.add('flex');
+      };
+      document.getElementById('btn-open-api-modal').addEventListener('click', openApiModal);
+      document.getElementById('btn-header-setup-api').addEventListener('click', openApiModal);
+      document.getElementById('btn-close-api-modal').addEventListener('click', () => {
+        apiModal.classList.add('hidden');
+        apiModal.classList.remove('flex');
+      });
+
+      document.getElementById('btn-toggle-key-vis').addEventListener('click', () => {
+        const inp = document.getElementById('input-api-key');
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      });
+
+      // 選擇模型自訂輸入框切換
+      document.getElementById('select-gemini-model').addEventListener('change', (e) => {
+        const customWrapper = document.getElementById('custom-model-wrapper');
+        if (e.target.value === 'custom') {
+          customWrapper.classList.remove('hidden');
+          document.getElementById('input-custom-model').focus();
+        } else {
+          customWrapper.classList.add('hidden');
+        }
+      });
+
+      // 查詢帳號可用模型功能
+      document.getElementById('btn-fetch-account-models').addEventListener('click', async () => {
+        const key = document.getElementById('input-api-key').value.trim();
+        const resBox = document.getElementById('api-test-result');
+        resBox.classList.remove('hidden');
+
+        if (!key) {
+          resBox.className = 'p-2.5 rounded-xl text-xs font-medium bg-rose-100 text-rose-800';
+          resBox.textContent = '請先填入 API Key 再查詢！';
+          return;
+        }
+
+        resBox.className = 'p-2.5 rounded-xl text-xs font-medium bg-indigo-50 text-indigo-800';
+        resBox.textContent = '正在向 Google 官方查詢您帳號可用的模型清單...';
+
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `HTTP ${res.status}`);
+          }
+          const data = await res.json();
+          const availableModels = (data.models || [])
+            .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+            .map(m => m.name.replace(/^models\//, ''));
+
+          if (availableModels.length === 0) {
+            throw new Error('未查得支援對話生成的可用模型');
+          }
+
+          const selectEl = document.getElementById('select-gemini-model');
+          selectEl.innerHTML = '';
+          availableModels.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = `${m} (官方已開通)`;
+            if (m.includes('1.5-flash') || m.includes('2.0-flash')) opt.selected = true;
+            selectEl.appendChild(opt);
+          });
+
+          // 保留自訂選項
+          const customOpt = document.createElement('option');
+          customOpt.value = 'custom';
+          customOpt.textContent = '自訂模型名稱...';
+          selectEl.appendChild(customOpt);
+
+          resBox.className = 'p-2.5 rounded-xl text-xs font-medium bg-emerald-100 text-emerald-800';
+          resBox.innerHTML = `✅ 成功取得您帳號支援的 <strong>${availableModels.length}</strong> 個官方模型！已自動更新下拉選單。`;
+          showToast(`已載入 ${availableModels.length} 個可用 Gemini 模型`, '🎉');
+        } catch (err) {
+          resBox.className = 'p-2.5 rounded-xl text-xs font-medium bg-rose-100 text-rose-800';
+          resBox.innerHTML = `❌ <strong>查詢失敗：</strong>${err.message}<br><span class="text-[11px] text-slate-700">若金鑰受限，您可直接在下拉選單選取 <code>gemini-1.5-flash</code> 或 <code>gemini-2.0-flash</code>。</span>`;
+        }
+      });
+
+      // 測試連線診斷（支援防 404 與格式清理）
+      document.getElementById('btn-test-api-connection').addEventListener('click', async () => {
+        const key = document.getElementById('input-api-key').value.trim();
+        let model = document.getElementById('select-gemini-model').value;
+        if (model === 'custom') {
+          model = document.getElementById('input-custom-model').value.trim() || 'gemini-1.5-flash';
+        }
+        const resBox = document.getElementById('api-test-result');
+        resBox.classList.remove('hidden');
+
+        if (!key) {
+          resBox.className = 'p-2.5 rounded-xl text-xs font-medium bg-rose-100 text-rose-800';
+          resBox.textContent = '請先填入 API Key！';
+          return;
+        }
+
+        resBox.className = 'p-2.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-700';
+        resBox.textContent = '連線診斷中...';
+
+        const cleanModel = model.replace(/^models\//, '');
+        const testModels = [cleanModel, 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-2.0-flash'];
+        const uniqueTestModels = Array.from(new Set(testModels));
+
+        let lastErr = null;
+        for (const m of uniqueTestModels) {
+          try {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: '回覆五個字：連線測試成功' }] }] })
+            });
+
+            if (!resp.ok) {
+              const err = await resp.json().catch(() => ({}));
+              throw new Error(err.error?.message || `HTTP ${resp.status}`);
+            }
+
+            const d = await resp.json();
+            const r = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            resBox.className = 'p-2.5 rounded-xl text-xs font-medium bg-emerald-100 text-emerald-800';
+            resBox.innerHTML = `✅ 連線成功！Gemini 官方 (${m}) 原生回應：<strong>${r.trim()}</strong>`;
+            
+            // 若自動切換到了可用的模型，同步選中
+            if (m !== cleanModel) {
+              document.getElementById('select-gemini-model').value = m;
+            }
+            return;
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+
+        resBox.className = 'p-2.5 rounded-xl text-xs font-medium bg-rose-100 text-rose-800 space-y-1';
+        resBox.innerHTML = `<div>❌ <strong>連線失敗：</strong>${lastErr ? lastErr.message : 'HTTP 404 Not Found'}</div>
+          <div class="text-[11px] text-slate-700">💡 建議點擊上方的「<strong>🔄 查詢可用模型</strong>」，讓系統自動載入您帳號已開通的最新模型版本。</div>`;
+      });
+
+      document.getElementById('btn-save-api-key').addEventListener('click', () => {
+        const key = document.getElementById('input-api-key').value.trim();
+        let model = document.getElementById('select-gemini-model').value;
+        if (model === 'custom') {
+          model = document.getElementById('input-custom-model').value.trim() || 'gemini-1.5-flash';
+        }
+        geminiConfig.apiKey = key;
+        geminiConfig.model = model;
+        localStorage.setItem('gemini_kb_api_key', key);
+        localStorage.setItem('gemini_kb_model', model);
+        updateApiStatusBadge();
+        apiModal.classList.add('hidden');
+        apiModal.classList.remove('flex');
+        showToast('已儲存 Gemini 設定！', '🔑');
+      });
+
+      document.getElementById('btn-clear-api-key').addEventListener('click', () => {
+        geminiConfig.apiKey = '';
+        localStorage.removeItem('gemini_kb_api_key');
+        document.getElementById('input-api-key').value = '';
+        updateApiStatusBadge();
+        apiModal.classList.add('hidden');
+        apiModal.classList.remove('flex');
+        showToast('已清除 API Key，切回模擬引擎。', 'ℹ️');
+      });
+
+      // 匯出 CSV/JSON Modal
+      const expModal = document.getElementById('export-modal');
+      document.getElementById('btn-export-modal').addEventListener('click', () => {
+        document.getElementById('export-content-pre').textContent = JSON.stringify(codingLogs, null, 2);
+        expModal.classList.remove('hidden');
+        expModal.classList.add('flex');
+      });
+      document.getElementById('btn-close-export').addEventListener('click', () => {
+        expModal.classList.add('hidden');
+        expModal.classList.remove('flex');
+      });
+
+      const getCsvStr = () => {
+        const headers = ['LogID', 'ClassroomID', 'Date', 'Time', 'Space', 'Group', 'Seat', 'Scaffold', 'Question_Score', 'Evidence_Score', 'Depth_Score', 'KB_Move', 'Flag', 'RawText', 'AIReply'];
+        const rows = codingLogs.map(l => [
+          l.id, l.classroomId, l.date, l.timestamp, l.space, l.group, l.seat,
+          `"${l.scaffold}"`, l.scores?.c || 2, l.scores?.e || 2, l.scores?.r || 1,
+          `"${l.kbMove}"`, `"${l.flag}"`,
+          `"${(l.rawText || '').replace(/"/g, '""')}"`,
+          `"${(l.aiReply || '').replace(/"/g, '""')}"`
+        ].join(','));
+        return [headers.join(','), ...rows].join('\n');
+      };
+
+      document.getElementById('btn-copy-csv').addEventListener('click', () => {
+        navigator.clipboard?.writeText(getCsvStr());
+        showToast('已複製 CSV 格式數據！', '📊');
+      });
+      document.getElementById('btn-copy-json').addEventListener('click', () => {
+        navigator.clipboard?.writeText(JSON.stringify(codingLogs, null, 2));
+        showToast('已複製 JSON 數據！', '📋');
+      });
+      document.getElementById('btn-download-csv').addEventListener('click', () => {
+        const blob = new Blob(["\uFEFF" + getCsvStr()], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `KB_Inquiry_Research_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        showToast('已下載研究 CSV 檔案！', '⬇️');
+      });
+
+      // 初始化渲染畫面
+      renderStudentInterface();
+      renderTeacherBackend(false);
+    });
+  </script>
+</body>
+</html>
